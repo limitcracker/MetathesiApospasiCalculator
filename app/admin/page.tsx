@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminPage() {
   const flows = await prisma.flow.findMany({
     include: { flowCriteria: { include: { criterion: true } } },
