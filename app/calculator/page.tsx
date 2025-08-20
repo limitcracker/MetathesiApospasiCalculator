@@ -28,7 +28,7 @@ export default function CalculatorPage() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
   const [selectedFlowId, setSelectedFlowId] = useState<string>('')
-  const [year, setYear] = useState<number>(new Date().getFullYear())
+  // const [year, setYear] = useState<number>(new Date().getFullYear()) // Unused
   const [yearsList, setYearsList] = useState<Array<{
     id: string
     year: number
@@ -59,14 +59,14 @@ export default function CalculatorPage() {
 
   // Active year helpers
   const activeYear = yearsList[selectedYearIdx]
-  const updateActiveYear = (updater: (y: typeof activeYear) => typeof activeYear) => {
-    setYearsList((arr) => arr.map((it, i) => (i === selectedYearIdx ? updater(it) : it)))
-  }
+  // const updateActiveYear = (updater: (y: typeof activeYear) => typeof activeYear) => {
+  //   setYearsList((arr) => arr.map((it, i) => (i === selectedYearIdx ? updater(it) : it)))
+  // } // Unused function
 
   const selectedFlow = useMemo(() => flows?.find((f) => f.id === selectedFlowId), [flows, selectedFlowId])
   const enabledKeys = useMemo(() => new Set<string>(selectedFlow?.flowCriteria?.map((fc) => fc.criterion.key) ?? []), [selectedFlow])
   const supportsSubstitute = useMemo(() => selectedFlow?.slug === 'metathesi' || selectedFlow?.slug === 'apospasi', [selectedFlow])
-  const sumWeeklyHours = useMemo(() => (activeYear?.placements || []).reduce((sum, p) => sum + (p.weeklyHours ?? 0), 0), [activeYear])
+  // const sumWeeklyHours = useMemo(() => (activeYear?.placements || []).reduce((sum, p) => sum + (p.weeklyHours ?? 0), 0), [activeYear]) // Unused
 
   useEffect(() => {
     if (flows && flows.length && !selectedFlowId) {
@@ -75,17 +75,17 @@ export default function CalculatorPage() {
   }, [flows, selectedFlowId])
 
   // Keep main year in sync with selected in list
-  useEffect(() => {
-    const y = yearsList[selectedYearIdx]?.year
-    if (typeof y === 'number') setYear(y)
-  }, [selectedYearIdx, yearsList])
+  // useEffect(() => {
+  //   const y = yearsList[selectedYearIdx]?.year
+  //   if (typeof y === 'number') setYear(y)
+  // }, [selectedYearIdx, yearsList]) // Unused since setYear is unused
 
-  const addPlacement = () => {
-    updateActiveYear((y) => ({
-      ...y,
-      placements: [...y.placements, { schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 23 }],
-    }))
-  }
+  // const addPlacement = () => {
+  //   updateActiveYear((y) => ({
+  //     ...y,
+  //     placements: [...y.placements, { schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 23 }],
+  //   }))
+  // } // Unused function
 
   const computeClientSide = (): number => {
     if (!selectedFlow) return 0
@@ -253,7 +253,7 @@ export default function CalculatorPage() {
                       onChange={(e) => {
                         const val = parseInt(e.target.value) || 0
                         setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, year: val } : it)))
-                        if (isActive) setYear(val)
+                        // if (isActive) setYear(val) // Unused
                       }}
                       className={`border rounded p-1 w-28 ${duplicate ? 'border-red-600' : ''}`}
                     />

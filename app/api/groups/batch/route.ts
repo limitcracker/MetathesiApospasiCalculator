@@ -8,7 +8,6 @@ type GroupInput = {
   childrenCount?: number
   hasSynypiretisi?: boolean
   hasEntopiotita?: boolean
-  proypiresiaYears?: number
   hasStudies?: boolean
   hasIvf?: boolean
   hasFirstPreference?: boolean
@@ -32,11 +31,10 @@ export async function POST(req: NextRequest) {
       }
       const created = await prisma.placementGroup.create({ data: item })
       results.push({ year: item.year, status: 'created', id: created.id })
-    } catch (e: any) {
-      results.push({ year: item.year, status: 'error', message: e?.message || 'unknown' })
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'unknown'
+      results.push({ year: item.year, status: 'error', message: errorMessage })
     }
   }
   return NextResponse.json({ results })
 }
-
-

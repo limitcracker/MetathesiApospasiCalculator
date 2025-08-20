@@ -4,14 +4,25 @@ import useSWR from 'swr'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
+type Group = {
+  id: string
+  year: number
+  flowId: string
+  isSubstitute: boolean
+  substituteMonths: number
+  flow?: {
+    name: string
+  }
+}
+
 export default function YearsPage() {
-  const { data: groups, mutate } = useSWR('/api/groups', fetcher)
+  const { data: groups, mutate } = useSWR<Group[]>('/api/groups', fetcher)
 
   return (
     <main className="max-w-3xl mx-auto p-6 space-y-4">
       <h1 className="text-2xl font-semibold">Έτη</h1>
       <div className="space-y-2">
-        {groups?.map((g: any) => (
+        {groups?.map((g: Group) => (
           <div key={g.id} className="border rounded p-3 flex items-center justify-between">
             <div>
               <div className="font-medium">{g.year} <span className="opacity-70">— {g.flow?.name || g.flowId}</span></div>
@@ -43,5 +54,3 @@ export default function YearsPage() {
     </main>
   )
 }
-
-
