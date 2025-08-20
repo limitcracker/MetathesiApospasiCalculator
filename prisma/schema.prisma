@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Flow {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  name        String
+  description String?
+
+  flowCriteria FlowCriterion[]
+  groups       PlacementGroup[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Criterion {
+  id          String          @id @default(cuid())
+  key         String          @unique
+  label       String
+  description String?
+
+  flowCriteria FlowCriterion[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FlowCriterion {
+  id          String   @id @default(cuid())
+  flowId      String
+  criterionId String
+  enabled     Boolean  @default(true)
+  config      Json
+
+  flow      Flow      @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  criterion Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@unique([flowId, criterionId])
+}
+
+model PlacementGroup {
+  id        String   @id @default(cuid())
+  year      Int
+  flowId    String
+
+  // User answers applicable to the selected flow
+  hasMarriage        Boolean @default(false)
+  childrenCount      Int     @default(0)
+  hasSynypiretisi    Boolean @default(false)
+  hasEntopiotita     Boolean @default(false)
+  hasStudies         Boolean @default(false)
+  hasIvf             Boolean @default(false)
+  hasFirstPreference Boolean @default(false)
+
+  // Substitute (Αναπληρωτής) fields
+  isSubstitute       Boolean @default(false)
+  totalWeeklyHours   Int     @default(0)
+  substituteMonths   Int     @default(0) // 0-12
+
+  placements PlacementEntry[]
+  flow       Flow             @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([year])
+  @@unique([flowId, year])
+}
+
+model PlacementEntry {
+  id         String  @id @default(cuid())
+  groupId    String
+  schoolName String
+  isPrimary  Boolean @default(false)
+  months     Int     @default(12) // 0-12
+  msd        Int     // 1-14 base MΣΔ (per school)
+  isPrison   Boolean @default(false)
+  weeklyHours Int    @default(0)
+
+  group PlacementGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
