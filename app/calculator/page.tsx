@@ -103,22 +103,24 @@ export default function CalculatorPage() {
     if (hasSynypiretisi) points += readNumber(getCfg('synypiretisi'), 'points')
     if (hasEntopiotita) points += readNumber(getCfg('entopiotita'), 'points')
     
-    // Calculate total months from all years
-    let totalMonths = 0
-    for (const year of yearsList) {
-      if (supportsSubstitute && year.isSubstitute) {
-        // For substitute years, use substituteMonths
-        totalMonths += year.substituteMonths
-      } else {
-        // For regular years, sum all placement months
-        totalMonths += year.placements.reduce((sum, p) => sum + p.months, 0)
+    // Calculate total months from all years (skip for Flow 1 - Νεοδιόριστος)
+    if (selectedFlowId !== flows?.find(f => f.slug === 'neodioristos')?.id) {
+      let totalMonths = 0
+      for (const year of yearsList) {
+        if (supportsSubstitute && year.isSubstitute) {
+          // For substitute years, use substituteMonths
+          totalMonths += year.substituteMonths
+        } else {
+          // For regular years, sum all placement months
+          totalMonths += year.placements.reduce((sum, p) => sum + p.months, 0)
+        }
       }
+      
+      // Apply flow-specific calculation (convert months to years)
+      const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
+      const totalYears = totalMonths / 12
+      points += perYearBase * totalYears
     }
-    
-    // Apply flow-specific calculation (convert months to years)
-    const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
-    const totalYears = totalMonths / 12
-    points += perYearBase * totalYears
     const dys = getCfg('dysprosita')
     const pris = getCfg('prisons')
     const msd = getCfg('msd')
