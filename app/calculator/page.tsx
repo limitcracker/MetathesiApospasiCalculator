@@ -56,6 +56,9 @@ export default function CalculatorPage() {
   const [hasStudies, setHasStudies] = useState(false)
   const [hasIvf, setHasIvf] = useState(false)
   const [hasFirstPreference, setHasFirstPreference] = useState(false)
+  
+  // Accordion state for expanded years
+  const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set(['y0']))
 
   // Active year helpers
   const activeYear = yearsList[selectedYearIdx]
@@ -144,93 +147,295 @@ export default function CalculatorPage() {
 
   const total = computeClientSide()
 
+  // Export functionality
+  const exportData = () => {
+    const data = {
+      selectedFlowId,
+      yearsList,
+      hasMarriage,
+      childrenCount,
+      hasSynypiretisi,
+      hasEntopiotita,
+      hasStudies,
+      hasIvf,
+      hasFirstPreference,
+      exportDate: new Date().toISOString(),
+      version: '1.0'
+    }
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `metathesi-data-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  // Import functionality
+  const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string)
+        
+        // Validate data structure
+        if (data.version && data.yearsList && Array.isArray(data.yearsList)) {
+          setSelectedFlowId(data.selectedFlowId || '')
+          setYearsList(data.yearsList)
+          setHasMarriage(data.hasMarriage || false)
+          setChildrenCount(data.childrenCount || 0)
+          setHasSynypiretisi(data.hasSynypiretisi || false)
+          setHasEntopiotita(data.hasEntopiotita || false)
+          setHasStudies(data.hasStudies || false)
+          setHasIvf(data.hasIvf || false)
+          setHasFirstPreference(data.hasFirstPreference || false)
+          
+          // Auto-expand the first year if any exist
+          if (data.yearsList.length > 0) {
+            setExpandedYears(new Set([data.yearsList[0].id]))
+          }
+          
+          alert('Δεδομένα εισήχθησαν επιτυχώς!')
+        } else {
+          alert('Μη έγκυρο αρχείο δεδομένων.')
+        }
+      } catch (error) {
+        alert('Σφάλμα κατά την ανάγνωση του αρχείου.')
+      }
+    }
+    reader.readAsText(file)
+    
+    // Reset the input so the same file can be selected again
+    event.target.value = ''
+  }
+
+  // Function to calculate points for a single year
+  const computeYearPoints = (year: typeof yearsList[0]): number => {
+    if (!selectedFlow) return 0
+    const configByKey = new Map<string, unknown>()
+    for (const fc of selectedFlow.flowCriteria) {
+      configByKey.set(fc.criterion.key, fc.config)
+    }
+    let points = 0
+    const getCfg = (k: string): unknown => configByKey.get(k)
+    
+    // Calculate MSD points for this year only
+    const dys = getCfg('dysprosita')
+    const pris = getCfg('prisons')
+    const msd = getCfg('msd')
+    if (msd) {
+      for (const pl of year.placements) {
+        let val = pl.msd
+        const threshold = readNumber(dys, 'threshold') || 10
+        const isDys = pl.msd >= threshold
+        if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+        const extra = readNumber(pris, 'extraMsd')
+        if (pl.isPrison && extra) val += extra
+        const monthsFactor = (supportsSubstitute && year.isSubstitute) ? (year.substituteMonths / 12) : (pl.months / 12)
+        points += val * monthsFactor
+      }
+    }
+    
+    // Calculate προϋπηρεσία points for this year only (skip for Flow 1)
+    if (selectedFlowId !== flows?.find(f => f.slug === 'neodioristos')?.id) {
+      let yearMonths = 0
+      if (supportsSubstitute && year.isSubstitute) {
+        yearMonths = year.substituteMonths
+      } else {
+        yearMonths = year.placements.reduce((sum, p) => sum + p.months, 0)
+      }
+      
+      const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
+      const yearYears = yearMonths / 12
+      points += perYearBase * yearYears
+    }
+    
+    return points
+  }
+
   if (!mounted) return null
 
   return (
-    <main className="max-w-3xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Υπολογισμός Μορίων</h1>
+    <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
+        <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-sm">Ροή</span>
-          <select value={selectedFlowId} onChange={(e) => setSelectedFlowId(e.target.value)} className="border rounded p-2">
-            {flows?.map((f) => (
-              <option key={f.id} value={f.id}>{f.name}</option>
-            ))}
-          </select>
-        </label>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <label className="flex flex-col gap-2 flex-1">
+            <span className="text-sm font-semibold text-blue-900">Επιλογή Ροής</span>
+            <select 
+              value={selectedFlowId} 
+              onChange={(e) => setSelectedFlowId(e.target.value)} 
+              className="border border-blue-300 rounded-lg p-3 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            >
+              {flows?.map((f) => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
+          </label>
+          
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={exportData}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Εξαγωγή
+            </button>
+            
+            <label className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2 cursor-pointer">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Εισαγωγή
+              <input
+                type="file"
+                accept=".json"
+                onChange={importData}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
       </div>
 
       {/* Κριτήρια (μια φορά) */}
-      <section className="space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-4">
+        <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">Κριτήρια (Μια Φορά)</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {enabledKeys.has('marriage') && (
-            <label className="flex items-center gap-2"><input type="checkbox" checked={hasMarriage} onChange={(e) => setHasMarriage(e.target.checked)} /> Γάμος</label>
+            <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+              <input 
+                type="checkbox" 
+                checked={hasMarriage} 
+                onChange={(e) => setHasMarriage(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="font-medium text-gray-900">Γάμος</span>
+            </label>
           )}
           {enabledKeys.has('children') && (
-            <label className="flex items-center gap-2">
-              Παιδιά
-              <input type="number" min={0} value={childrenCount} onChange={(e) => setChildrenCount(parseInt(e.target.value))} className="border rounded p-1 w-20" />
+            <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
+              <span className="font-medium text-gray-900">Παιδιά:</span>
+                             <input 
+                 type="number" 
+                 min={0} 
+                 value={childrenCount} 
+                 onChange={(e) => setChildrenCount(parseInt(e.target.value))} 
+                 className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+               />
             </label>
           )}
           {enabledKeys.has('synypiretisi') && (
-            <label className="flex items-center gap-2"><input type="checkbox" checked={hasSynypiretisi} onChange={(e) => setHasSynypiretisi(e.target.checked)} /> Συνυπηρέτηση</label>
+            <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+              <input 
+                type="checkbox" 
+                checked={hasSynypiretisi} 
+                onChange={(e) => setHasSynypiretisi(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="font-medium text-gray-900">Συνυπηρέτηση</span>
+            </label>
           )}
           {enabledKeys.has('entopiotita') && (
-            <label className="flex items-center gap-2"><input type="checkbox" checked={hasEntopiotita} onChange={(e) => setHasEntopiotita(e.target.checked)} /> Εντοπιότητα</label>
+            <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+              <input 
+                type="checkbox" 
+                checked={hasEntopiotita} 
+                onChange={(e) => setHasEntopiotita(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="font-medium text-gray-900">Εντοπιότητα</span>
+            </label>
           )}
-
-
-
           {enabledKeys.has('studies') && (
-            <label className="flex items-center gap-2"><input type="checkbox" checked={hasStudies} onChange={(e) => setHasStudies(e.target.checked)} /> Σπουδές</label>
+            <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+              <input 
+                type="checkbox" 
+                checked={hasStudies} 
+                onChange={(e) => setHasStudies(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="font-medium text-gray-900">Σπουδές</span>
+            </label>
           )}
           {enabledKeys.has('ivf') && (
-            <label className="flex items-center gap-2"><input type="checkbox" checked={hasIvf} onChange={(e) => setHasIvf(e.target.checked)} /> Εξωσωματική</label>
+            <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+              <input 
+                type="checkbox" 
+                checked={hasIvf} 
+                onChange={(e) => setHasIvf(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="font-medium text-gray-900">Εξωσωματική</span>
+            </label>
           )}
           {enabledKeys.has('firstPreference') && (
-            <label className="flex items-center gap-2"><input type="checkbox" checked={hasFirstPreference} onChange={(e) => setHasFirstPreference(e.target.checked)} /> Πρώτη προτίμηση</label>
+            <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+              <input 
+                type="checkbox" 
+                checked={hasFirstPreference} 
+                onChange={(e) => setHasFirstPreference(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="font-medium text-gray-900">Πρώτη προτίμηση</span>
+            </label>
           )}
         </div>
       </section>
 
       {/* Διαχείριση Ετών (δυναμική λίστα) */}
       {selectedFlowId !== flows?.find(f => f.slug === 'neodioristos')?.id && (
-        <section className="space-y-3">
-                  <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="font-medium">Έτη εργασίας</div>
-            {enabledKeys.has('proypiresia') && selectedFlowId !== flows?.find(f => f.slug === 'neodioristos')?.id && (
-              <div className="text-xs text-gray-600">
-                {(() => {
-                  let totalMonths = 0
-                  for (const year of yearsList) {
-                    if (supportsSubstitute && year.isSubstitute) {
-                      totalMonths += year.substituteMonths
-                    } else {
-                      totalMonths += year.placements.reduce((sum, p) => sum + p.months, 0)
+        <section className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold text-gray-900">Έτη Εργασίας</h2>
+              {enabledKeys.has('proypiresia') && selectedFlowId !== flows?.find(f => f.slug === 'neodioristos')?.id && (
+                <div className="text-sm text-blue-700 bg-blue-100 px-3 py-1 rounded-full font-medium">
+                  {(() => {
+                    let totalMonths = 0
+                    for (const year of yearsList) {
+                      if (supportsSubstitute && year.isSubstitute) {
+                        totalMonths += year.substituteMonths
+                      } else {
+                        totalMonths += year.placements.reduce((sum, p) => sum + p.months, 0)
+                      }
                     }
-                  }
-                  const totalYears = totalMonths / 12
-                  return totalMonths > 0 ? `Προϋπηρεσία: ${totalMonths}μ = ${totalYears.toFixed(1)}έτη` : null
-                })()}
-              </div>
-            )}
-          </div>
-          <button
+                    const totalYears = totalMonths / 12
+                    return totalMonths > 0 ? `Προϋπηρεσία: ${totalMonths}μ = ${totalYears.toFixed(1)}έτη` : null
+                  })()}
+                </div>
+              )}
+            </div>
+            <button
               type="button"
-              className="px-3 py-1 rounded bg-black text-white"
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
               onClick={() => {
-                              const next = {
-                id: Math.random().toString(36).slice(2),
-                year: (yearsList[yearsList.length - 1]?.year || new Date().getFullYear()) + 1,
-                isSubstitute: false,
-                totalWeeklyHours: 23,
-                substituteMonths: 10,
-                placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 23 }],
-              }
+                const nextId = Math.random().toString(36).slice(2)
+                const next = {
+                  id: nextId,
+                  year: (yearsList[yearsList.length - 1]?.year || new Date().getFullYear()) + 1,
+                  isSubstitute: false,
+                  totalWeeklyHours: 23,
+                  substituteMonths: 10,
+                  placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 23 }],
+                }
                 setYearsList((arr) => [...arr, next])
                 setSelectedYearIdx(yearsList.length)
+                // Auto-expand only the new year (collapse others)
+                setExpandedYears(new Set([nextId]))
               }}
             >
               + Προσθήκη έτους
@@ -241,85 +446,183 @@ export default function CalculatorPage() {
             const isActive = idx === selectedYearIdx
             const duplicate = yearsList.filter((yy) => yy.year === y.year).length > 1
             const rowSum = (y.placements || []).reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
+            const isExpanded = expandedYears.has(y.id)
+            
             return (
-              <div key={y.id} className={`border rounded p-3 space-y-3 ${isActive ? 'bg-black/[.03]' : ''}`}>
-                <div className="flex items-center gap-3">
-                  <button type="button" className={`px-2 py-1 rounded border ${isActive ? 'bg-black text-white' : ''}`} onClick={() => setSelectedYearIdx(idx)}>
-                    Επιλογή
+              <div key={y.id} className={`border border-gray-200 rounded-lg overflow-hidden ${isActive ? 'ring-2 ring-blue-500' : ''} bg-white shadow-sm`}>
+                {/* Accordion Header */}
+                <div className="flex items-center gap-3 p-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+                  <button 
+                    type="button" 
+                    className="flex items-center gap-3 text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                    onClick={() => {
+                      if (isExpanded) {
+                        // If already expanded, collapse it
+                        setExpandedYears(new Set())
+                      } else {
+                        // If collapsed, expand only this one (collapse others)
+                        setExpandedYears(new Set([y.id]))
+                      }
+                    }}
+                  >
+                    <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{idx + 1}</span>
+                    <span className="text-lg">{isExpanded ? '▼' : '▶'}</span>
+                    <span>Έτος {y.year}</span>
+                    {duplicate && <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">Διπλότυπο</span>}
                   </button>
-                  <label className="flex items-center gap-2">
-                    Έτος
-                    <input
-                      type="number"
-                      value={y.year}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0
-                        setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, year: val } : it)))
-                        // if (isActive) setYear(val) // Unused
-                      }}
-                      className={`border rounded p-1 w-28 ${duplicate ? 'border-red-600' : ''}`}
-                    />
-                  </label>
-                  {duplicate && <span className="text-sm text-red-700">Διπλότυπο έτος</span>}
+                  
+                  <div className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                    {computeYearPoints(y).toFixed(1)} μόρια
+                  </div>
+                  
                   <button
                     type="button"
-                    className="ml-auto px-2 py-1 text-sm border rounded"
+                    className="ml-auto px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium"
                     onClick={() => {
                       setYearsList((arr) => arr.filter((_, i) => i !== idx))
                       if (idx === selectedYearIdx) setSelectedYearIdx(0)
+                      // Remove from expanded set
+                      const newExpanded = new Set(expandedYears)
+                      newExpanded.delete(y.id)
+                      setExpandedYears(newExpanded)
                     }}
                   >
                     Διαγραφή
                   </button>
                 </div>
 
-                {supportsSubstitute && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                    <label className="flex items-center gap-2 md:col-span-1">
-                      <input type="checkbox" checked={y.isSubstitute} onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: e.target.checked } : it)))} /> Αναπληρωτής (έτος)
-                    </label>
-                    {y.isSubstitute && (
-                      <>
-                        <label className="flex items-center gap-2 md:col-span-1">
-                          Συνολικές εβδομαδιαίες ώρες (ωράριο)
-                          <input type="number" min={0} value={y.totalWeeklyHours} onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, totalWeeklyHours: parseInt(e.target.value) || 0 } : it)))} className="border rounded p-1 w-28" />
-                        </label>
-                        <label className="flex items-center gap-2 md:col-span-1">
-                          Μήνες ως Αναπληρωτής
-                          <input type="number" min={0} max={10} value={y.substituteMonths} onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, substituteMonths: parseInt(e.target.value) || 0 } : it)))} className="border rounded p-1 w-24" />
-                        </label>
-                        <div className={`text-sm md:col-span-3 ${rowSum === y.totalWeeklyHours ? 'text-green-700' : 'text-red-700'}`}>
-                          Σύνολο ωρών από σχολεία: {rowSum} {rowSum === y.totalWeeklyHours ? '' : `(πρέπει να ισούται με ${y.totalWeeklyHours})`}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {(
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <h2 className="font-medium">Σχολεία (έτος {y.year})</h2>
-                      <button
-                        type="button"
-                        onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: [...it.placements, { schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 23 }] } : it)))}
-                        className="px-3 py-1 rounded border"
-                      >
-                        + Σχολείο
-                      </button>
+                {/* Accordion Content */}
+                {isExpanded && (
+                  <div className="p-6 space-y-6 bg-gray-50">
+                    {/* Year Input */}
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-3">
+                        <span className="font-medium text-gray-900">Έτος:</span>
+                                                  <input
+                            type="number"
+                            value={y.year}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 0
+                              setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, year: val } : it)))
+                            }}
+                            className={`border border-gray-300 rounded-lg p-2 w-32 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${duplicate ? 'border-red-500 ring-red-200' : ''}`}
+                          />
+                      </label>
                     </div>
-                    <div className="space-y-3">
-                      {y.placements.map((p, pIdx) => (
-                        <div key={pIdx} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
-                          <input className="border rounded p-2 md:col-span-2" placeholder="Σχολείο" value={p.schoolName} onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, schoolName: e.target.value } : pp)) } : it)))} />
+
+                    {/* Substitute Teacher Fields */}
+                    {supportsSubstitute && (
+                      <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+                        <h4 className="font-semibold text-gray-900 border-b border-gray-200 pb-2">Αναπληρωτής Εκπαιδευτικός</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                          <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                            <input 
+                              type="checkbox" 
+                              checked={y.isSubstitute} 
+                              onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: e.target.checked } : it)))}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="font-medium text-gray-900">Αναπληρωτής (έτος)</span>
+                          </label>
                           {y.isSubstitute && (
-                            <label className="flex items-center gap-2">Ώρες/εβδ. <input type="number" min={0} value={p.weeklyHours ?? 0} onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, weeklyHours: parseInt(e.target.value) || 0 } : pp)) } : it)))} className="border rounded p-1 w-24" /></label>
+                            <>
+                              <label className="flex flex-col gap-2">
+                                <span className="text-sm font-medium text-gray-700">Συνολικές εβδομαδιαίες ώρες (ωράριο)</span>
+                                                                 <input 
+                                   type="number" 
+                                   min={0} 
+                                   value={y.totalWeeklyHours} 
+                                   onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, totalWeeklyHours: parseInt(e.target.value) || 0 } : it)))} 
+                                   className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                 />
+                              </label>
+                              <label className="flex flex-col gap-2">
+                                <span className="text-sm font-medium text-gray-700">Μήνες ως Αναπληρωτής</span>
+                                                                 <input 
+                                   type="number" 
+                                   min={0} 
+                                   max={10} 
+                                   value={y.substituteMonths} 
+                                   onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, substituteMonths: parseInt(e.target.value) || 0 } : it)))} 
+                                   className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                 />
+                              </label>
+                              <div className={`text-sm p-3 rounded-lg border ${rowSum === y.totalWeeklyHours ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200'}`}>
+                                Σύνολο ωρών από σχολεία: <span className="font-semibold">{rowSum}</span> 
+                                {rowSum === y.totalWeeklyHours ? '' : ` (πρέπει να ισούται με ${y.totalWeeklyHours})`}
+                              </div>
+                            </>
                           )}
-                          <label className="flex items-center gap-2">ΜΣΔ <input type="number" min={1} max={14} value={p.msd} onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))} className="border rounded p-1 w-20" /></label>
-                          <label className="flex items-center gap-2"><input type="checkbox" checked={p.isPrison} onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, isPrison: e.target.checked } : pp)) } : it)))} /> Φυλακή</label>
-                          <button type="button" className="px-2 py-1 text-sm border rounded" onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.filter((_, j) => j !== pIdx) } : it)))}>Διαγραφή</button>
                         </div>
-                      ))}
+                      </div>
+                    )}
+
+                    {/* Schools Section */}
+                    <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+                      <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                        <h3 className="font-semibold text-gray-900">Σχολεία (έτος {y.year})</h3>
+                        <button
+                          type="button"
+                          onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: [...it.placements, { schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 23 }] } : it)))}
+                          className="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors shadow-sm"
+                        >
+                          + Σχολείο
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        {y.placements.map((p, pIdx) => (
+                          <div key={pIdx} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-center p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <div className="flex items-center gap-3 md:col-span-2">
+                              <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{pIdx + 1}</span>
+                              <input 
+                                className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                placeholder="Όνομα σχολείου" 
+                                value={p.schoolName} 
+                                onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, schoolName: e.target.value } : pp)) } : it)))} 
+                              />
+                            </div>
+                            {y.isSubstitute && (
+                              <label className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-700">Ώρες/εβδ.</span>
+                                                                 <input 
+                                   type="number" 
+                                   min={0} 
+                                   value={p.weeklyHours ?? 0} 
+                                   onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, weeklyHours: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
+                                   className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                 />
+                              </label>
+                            )}
+                                                         <label className="flex items-center gap-2">
+                               <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
+                               <input 
+                                 type="number" 
+                                 min={1} 
+                                 max={14} 
+                                 value={p.msd} 
+                                 onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
+                                 className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               />
+                             </label>
+                            <label className="flex items-center gap-2">
+                              <input 
+                                type="checkbox" 
+                                checked={p.isPrison} 
+                                onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, isPrison: e.target.checked } : pp)) } : it)))}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <span className="text-sm font-medium text-gray-700">Φυλακή</span>
+                            </label>
+                            <button 
+                              type="button" 
+                              className="px-3 py-2 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium" 
+                              onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.filter((_, j) => j !== pIdx) } : it)))}
+                            >
+                              Διαγραφή
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -332,7 +635,11 @@ export default function CalculatorPage() {
 
 
 
-      <div className="text-xl">Σύνολο μόρια: <span className="font-semibold">{total.toFixed(2)}</span></div>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
+        <div className="text-2xl font-bold">Σύνολο Μορίων</div>
+        <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
+        <div className="text-blue-100 text-sm mt-1">μορία</div>
+      </div>
     </main>
   )
 }
