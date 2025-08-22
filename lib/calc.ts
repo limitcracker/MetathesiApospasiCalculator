@@ -1,6 +1,55 @@
-import { Criterion, Flow, FlowCriterion, PlacementEntry, PlacementGroup } from '@prisma/client'
+// Define types locally instead of importing from Prisma
+export type Criterion = {
+  id: string
+  key: string
+  label: string
+  description?: string
+}
 
-export type FlowWithCriteria = Flow & { flowCriteria: (FlowCriterion & { criterion: Criterion })[] }
+export type FlowCriterion = {
+  id: string
+  flowId: string
+  criterionId: string
+  enabled: boolean
+  config: unknown
+  criterion: Criterion
+}
+
+export type Flow = {
+  id: string
+  slug: string
+  name: string
+  description?: string
+}
+
+export type PlacementEntry = {
+  id: string
+  groupId: string
+  schoolName: string
+  isPrimary: boolean
+  months: number
+  msd: number
+  isPrison: boolean
+  weeklyHours: number
+}
+
+export type PlacementGroup = {
+  id: string
+  year: number
+  flowId: string
+  hasMarriage: boolean
+  childrenCount: number
+  hasSynypiretisi: boolean
+  hasEntopiotita: boolean
+  hasStudies: boolean
+  hasIvf: boolean
+  hasFirstPreference: boolean
+  isSubstitute: boolean
+  totalWeeklyHours: number
+  substituteMonths: number
+}
+
+export type FlowWithCriteria = Flow & { flowCriteria: FlowCriterion[] }
 
 function readNumber(obj: unknown, key: string): number {
   if (!obj || typeof obj !== 'object') return 0
