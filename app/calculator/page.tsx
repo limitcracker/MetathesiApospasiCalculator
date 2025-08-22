@@ -640,7 +640,31 @@ export default function CalculatorPage() {
                                    type="number" 
                                    min={0} 
                                    value={y.totalWeeklyHours} 
-                                   onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, totalWeeklyHours: parseInt(e.target.value) || 0 } : it)))} 
+                                   onChange={(e) => {
+                                     const newTotalHours = parseInt(e.target.value) || 0
+                                     
+                                     // If this is a substitute teacher and we have schools, redistribute hours
+                                     if (y.isSubstitute && newTotalHours > 0 && y.placements.length > 0) {
+                                       const hoursPerSchool = Math.floor(newTotalHours / y.placements.length)
+                                       const extraHours = newTotalHours % y.placements.length
+                                       
+                                       const updatedPlacements = y.placements.map((placement, index) => ({
+                                         ...placement,
+                                         weeklyHours: hoursPerSchool + (index < extraHours ? 1 : 0)
+                                       }))
+                                       
+                                       setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                         ...it, 
+                                         totalWeeklyHours: newTotalHours,
+                                         placements: updatedPlacements 
+                                       } : it)))
+                                     } else {
+                                       setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                         ...it, 
+                                         totalWeeklyHours: newTotalHours 
+                                       } : it)))
+                                     }
+                                   }} 
                                    className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                  />
                               </label>
@@ -690,7 +714,26 @@ export default function CalculatorPage() {
                         <h3 className="font-semibold text-gray-900">Σχολεία (έτος {y.year})</h3>
                         <button
                           type="button"
-                          onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: [...it.placements, { schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 23 }] } : it)))}
+                          onClick={() => {
+                            // Calculate remaining hours for substitute teachers
+                            let newWeeklyHours = 23 // default value
+                            if (y.isSubstitute && y.totalWeeklyHours > 0) {
+                              const currentTotalHours = y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
+                              const remainingHours = y.totalWeeklyHours - currentTotalHours
+                              newWeeklyHours = Math.max(0, remainingHours)
+                            }
+                            
+                            setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                              ...it, 
+                              placements: [...it.placements, { 
+                                schoolName: '', 
+                                months: 12, 
+                                msd: 1, 
+                                isPrison: false, 
+                                weeklyHours: newWeeklyHours 
+                              }] 
+                            } : it)))
+                          }}
                           className="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors shadow-sm"
                         >
                           + Σχολείο
@@ -743,7 +786,32 @@ export default function CalculatorPage() {
                             <button 
                               type="button" 
                               className="px-3 py-2 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium" 
-                              onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.filter((_, j) => j !== pIdx) } : it)))}
+                              onClick={() => {
+                                // Remove the school
+                                const newPlacements = y.placements.filter((_, j) => j !== pIdx)
+                                
+                                // If this is a substitute teacher and we have remaining schools, redistribute hours
+                                if (y.isSubstitute && y.totalWeeklyHours > 0 && newPlacements.length > 0) {
+                                  const remainingHours = y.totalWeeklyHours
+                                  const hoursPerSchool = Math.floor(remainingHours / newPlacements.length)
+                                  const extraHours = remainingHours % newPlacements.length
+                                  
+                                  const updatedPlacements = newPlacements.map((placement, index) => ({
+                                    ...placement,
+                                    weeklyHours: hoursPerSchool + (index < extraHours ? 1 : 0)
+                                  }))
+                                  
+                                  setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                    ...it, 
+                                    placements: updatedPlacements 
+                                  } : it)))
+                                } else {
+                                  setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                    ...it, 
+                                    placements: newPlacements 
+                                  } : it)))
+                                }
+                              }}
                             >
                               Διαγραφή
                             </button>
