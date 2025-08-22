@@ -119,42 +119,64 @@ export default function CalculatorPage() {
         }
       }
       
-      // Apply flow-specific calculation (convert months to years)
-      const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
       const totalYears = totalMonths / 12
-      points += perYearBase * totalYears
+      
+      // Apply flow-specific calculation based on flow type
+      if (selectedFlow?.slug === 'metathesi') {
+        // Ροή 2: total working months / 12 * 2.5
+        points += totalYears * 2.5
+      } else if (selectedFlow?.slug === 'apospasi') {
+        // Ροή 3: different multipliers based on years
+        if (totalYears <= 10) {
+          // Years 1-10: multiplier = 1
+          points += totalYears * 1
+        } else if (totalYears <= 20) {
+          // Years 11-20: multiplier = 1.5
+          points += totalYears * 1.5
+        } else {
+          // Years 20+: multiplier = 2
+          points += totalYears * 2
+        }
+      } else {
+        // Default calculation for other flows
+        const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
+        points += perYearBase * totalYears
+      }
     }
     const dys = getCfg('dysprosita')
     const pris = getCfg('prisons')
     const msd = getCfg('msd')
-    if (msd && activeYear) {
-      if (supportsSubstitute && activeYear.isSubstitute) {
-        // For substitute teachers, calculate partition based on weekly hours
-        const totalWeeklyHours = activeYear.totalWeeklyHours
-        for (const pl of activeYear.placements) {
-          let val = pl.msd
-          const threshold = readNumber(dys, 'threshold') || 10
-          const isDys = pl.msd >= threshold
-          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
-          const extra = readNumber(pris, 'extraMsd')
-          if (pl.isPrison && extra) val += extra
-          
-          // Calculate partition: (school weekly hours / total weekly hours) * MSD * substitute months / 12
-          const schoolWeeklyHours = pl.weeklyHours || 0
-          const partition = (schoolWeeklyHours / totalWeeklyHours) * val * (activeYear.substituteMonths / 12)
-          points += partition
-        }
-      } else {
-        // For regular teachers, use the original calculation
-        for (const pl of activeYear.placements) {
-          let val = pl.msd
-          const threshold = readNumber(dys, 'threshold') || 10
-          const isDys = pl.msd >= threshold
-          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
-          const extra = readNumber(pris, 'extraMsd')
-          if (pl.isPrison && extra) val += extra
-          const monthsFactor = pl.months / 12
-          points += val * monthsFactor
+    if (msd) {
+      // Calculate MSD points for all years
+      for (const year of yearsList) {
+        if (supportsSubstitute && year.isSubstitute) {
+          // For substitute teachers, calculate partition based on weekly hours
+          const totalWeeklyHours = year.totalWeeklyHours
+          for (const pl of year.placements) {
+            let val = pl.msd
+            const threshold = readNumber(dys, 'threshold') || 10
+            const isDys = pl.msd >= threshold
+            if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+            const extra = readNumber(pris, 'extraMsd')
+            if (pl.isPrison && extra) val += extra
+            
+            // Calculate partition: (school weekly hours / total weekly hours) * MSD * substitute months / 12
+            const schoolWeeklyHours = pl.weeklyHours || 0
+            const partition = (schoolWeeklyHours / totalWeeklyHours) * val * (year.substituteMonths / 12)
+            points += partition
+          }
+        } else {
+          // For regular teachers, use the original calculation
+          for (const pl of year.placements) {
+            let val = pl.msd
+            const threshold = readNumber(dys, 'threshold') || 10
+            const isDys = pl.msd >= threshold
+            if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+            const extra = readNumber(pris, 'extraMsd')
+            if (pl.isPrison && extra) val += extra
+            const monthsFactor = pl.months / 12
+            points += val * monthsFactor
+          }
         }
       }
     }
