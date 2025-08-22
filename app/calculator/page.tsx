@@ -186,7 +186,66 @@ export default function CalculatorPage() {
     return points
   }
 
-  const total = computeClientSide()
+  // Calculate total by summing individual year MSD points plus one-time criteria and προϋπηρεσία
+  const total = yearsList.reduce((sum, year) => sum + computeYearPoints(year), 0) + 
+    // Add one-time criteria points
+    (() => {
+      if (!selectedFlow) return 0
+      const configByKey = new Map<string, unknown>()
+      for (const fc of selectedFlow.flowCriteria) {
+        configByKey.set(fc.criterion.key, fc.config)
+      }
+      let points = 0
+      const getCfg = (k: string): unknown => configByKey.get(k)
+      if (hasMarriage) points += readNumber(getCfg('marriage'), 'points')
+      for (let i = 1; i <= childrenCount; i++) {
+        const c = getCfg('children')
+        points += i === 1 ? readNumber(c, 'first') : i === 2 ? readNumber(c, 'second') : i === 3 ? readNumber(c, 'third') : readNumber(c, 'fourthPlus')
+      }
+      if (hasSynypiretisi) points += readNumber(getCfg('synypiretisi'), 'points')
+      if (hasEntopiotita) points += readNumber(getCfg('entopiotita'), 'points')
+      if (hasStudies) points += readNumber(getCfg('studies'), 'points')
+      if (hasIvf) points += readNumber(getCfg('ivf'), 'points')
+      if (hasFirstPreference) points += readNumber(getCfg('firstPreference'), 'points')
+      
+      // Add προϋπηρεσία points (calculated once for total experience)
+      if (selectedFlowId !== flows?.find(f => f.slug === 'neodioristos')?.id) {
+        let totalMonths = 0
+        for (const year of yearsList) {
+          if (supportsSubstitute && year.isSubstitute) {
+            totalMonths += year.substituteMonths
+          } else {
+            totalMonths += year.placements.reduce((sum, p) => sum + p.months, 0)
+          }
+        }
+        
+        const totalYears = totalMonths / 12
+        
+        // Apply flow-specific calculation based on flow type
+        if (selectedFlow?.slug === 'metathesi') {
+          // Ροή 2: total working months / 12 * 2.5
+          points += totalYears * 2.5
+        } else if (selectedFlow?.slug === 'apospasi') {
+          // Ροή 3: different multipliers based on years
+          if (totalYears <= 10) {
+            // Years 1-10: multiplier = 1
+            points += totalYears * 1
+          } else if (totalYears <= 20) {
+            // Years 11-20: multiplier = 1.5
+            points += totalYears * 1.5
+          } else {
+            // Years 20+: multiplier = 2
+            points += totalYears * 2
+          }
+        } else {
+          // Default calculation for other flows
+          const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
+          points += perYearBase * totalYears
+        }
+      }
+      
+      return points
+    })()
 
   // Export functionality
   const exportData = () => {
@@ -302,19 +361,8 @@ export default function CalculatorPage() {
       }
     }
     
-    // Calculate προϋπηρεσία points for this year only (skip for Flow 1)
-    if (selectedFlowId !== flows?.find(f => f.slug === 'neodioristos')?.id) {
-      let yearMonths = 0
-      if (supportsSubstitute && year.isSubstitute) {
-        yearMonths = year.substituteMonths
-      } else {
-        yearMonths = year.placements.reduce((sum, p) => sum + p.months, 0)
-      }
-      
-      const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
-      const yearYears = yearMonths / 12
-      points += perYearBase * yearYears
-    }
+         // Note: προϋπηρεσία points are calculated only once for total experience, not per year
+     // This function only calculates MSD points for individual years
     
     return points
   }
