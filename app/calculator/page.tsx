@@ -436,19 +436,21 @@ export default function CalculatorPage() {
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
-             <div className="text-center space-y-2">
+             <div className="text-center space-y-4">
          <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
          <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
-                   <button
+         
+         {/* Prominent modal button */}
+         <button
             type="button"
             onClick={() => setShowTodoModal(true)}
-            className="inline-flex items-center gap-1 px-2 py-1 text-gray-500 hover:text-gray-700 transition-colors text-xs"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors shadow-sm"
             title="Επερχόμενα Χαρακτηριστικά"
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
-            <span className="hidden sm:inline">Επερχόμενα</span>
+            <span>Επερχόμενα Χαρακτηριστικά</span>
           </button>
        </div>
 
