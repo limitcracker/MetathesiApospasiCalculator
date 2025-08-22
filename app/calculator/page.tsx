@@ -758,7 +758,33 @@ export default function CalculatorPage() {
                                    type="number" 
                                    min={0} 
                                    value={p.weeklyHours ?? 0} 
-                                   onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, weeklyHours: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
+                                   onChange={(e) => {
+                                     const newHours = parseInt(e.target.value) || 0
+                                     const updatedPlacements = y.placements.map((pp, j) => 
+                                       j === pIdx ? { ...pp, weeklyHours: newHours } : pp
+                                     )
+                                     
+                                     // If this is a substitute teacher and we have more than one school, 
+                                     // automatically distribute remaining hours to the last school
+                                     if (y.isSubstitute && y.totalWeeklyHours > 0 && updatedPlacements.length > 1) {
+                                       const currentTotalHours = updatedPlacements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
+                                       const remainingHours = y.totalWeeklyHours - currentTotalHours
+                                       
+                                       if (remainingHours >= 0) {
+                                         // Distribute remaining hours to the last school
+                                         const lastIndex = updatedPlacements.length - 1
+                                         updatedPlacements[lastIndex] = {
+                                           ...updatedPlacements[lastIndex],
+                                           weeklyHours: remainingHours
+                                         }
+                                       }
+                                     }
+                                     
+                                     setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                       ...it, 
+                                       placements: updatedPlacements 
+                                     } : it)))
+                                   }} 
                                    className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                  />
                               </label>
