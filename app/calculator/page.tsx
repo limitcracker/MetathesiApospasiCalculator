@@ -60,6 +60,9 @@ export default function CalculatorPage() {
   // Accordion state for expanded years
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set(['y0']))
 
+  // TODO Modal state
+  const [showTodoModal, setShowTodoModal] = useState(false)
+
   // Active year helpers
   const activeYear = yearsList[selectedYearIdx]
   // const updateActiveYear = (updater: (y: typeof activeYear) => typeof activeYear) => {
@@ -433,10 +436,20 @@ export default function CalculatorPage() {
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
-        <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
-      </div>
+             <div className="text-center space-y-2">
+         <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
+         <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
+         <button
+           type="button"
+           onClick={() => setShowTodoModal(true)}
+           className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-colors shadow-sm text-sm"
+         >
+           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+           </svg>
+           Επερχόμενα Χαρακτηριστικά
+         </button>
+       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -962,13 +975,82 @@ export default function CalculatorPage() {
 
 
 
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
-        <div className="text-2xl font-bold">Σύνολο Μορίων</div>
-        <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
-        <div className="text-blue-100 text-sm mt-1">μορία</div>
-      </div>
-    </main>
-  )
-}
+             <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
+         <div className="text-2xl font-bold">Σύνολο Μορίων</div>
+         <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
+         <div className="text-blue-100 text-sm mt-1">μορία</div>
+       </div>
+
+       {/* TODO Modal */}
+       {showTodoModal && (
+         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+             <div className="p-6">
+               <div className="flex items-center justify-between mb-4">
+                 <h2 className="text-xl font-bold text-gray-900">Επερχόμενα Χαρακτηριστικά</h2>
+                 <button
+                   type="button"
+                   onClick={() => setShowTodoModal(false)}
+                   className="text-gray-400 hover:text-gray-600 transition-colors"
+                 >
+                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                   </svg>
+                 </button>
+               </div>
+               
+               <div className="space-y-4">
+                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                   <div className="flex items-start gap-3">
+                     <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                     </svg>
+                     <div>
+                       <h3 className="font-semibold text-yellow-900 mb-2">Χαρακτηριστικά σε Ανάπτυξη</h3>
+                       <ul className="space-y-2 text-sm text-yellow-800">
+                         <li className="flex items-start gap-2">
+                           <span className="text-yellow-600 font-medium">•</span>
+                           <span>Ωρομίσθιοι</span>
+                         </li>
+                         <li className="flex items-start gap-2">
+                           <span className="text-yellow-600 font-medium">•</span>
+                           <span>Ειδικές Κατηγορίες</span>
+                         </li>
+                       </ul>
+                     </div>
+                   </div>
+                 </div>
+                 
+                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                   <div className="flex items-start gap-3">
+                     <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                     </svg>
+                     <div>
+                       <h3 className="font-semibold text-blue-900 mb-2">Πληροφορίες</h3>
+                       <p className="text-sm text-blue-800">
+                         Αυτά τα χαρακτηριστικά θα είναι διαθέσιμα σύντομα. Ενημερωθείτε για τις τελευταίες εξελίξεις!
+                       </p>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+               
+               <div className="mt-6 flex justify-end">
+                 <button
+                   type="button"
+                   onClick={() => setShowTodoModal(false)}
+                   className="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                 >
+                   Κλείσιμο
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
+     </main>
+   )
+ }
 
 
