@@ -64,6 +64,91 @@ export default function CalculatorPage() {
   const enabledKeys = useMemo(() => new Set<string>(selectedFlow?.flowCriteria?.map((fc) => fc.criterion.key) ?? []), [selectedFlow])
   const supportsSubstitute = useMemo(() => selectedFlow?.slug === 'metathesi' || selectedFlow?.slug === 'apospasi', [selectedFlow])
 
+  // Function to check if there are at least 2 consecutive years with MSD 10-14
+  const hasConsecutiveYearsWithHighMSD = (year: typeof yearsList[0]): boolean => {
+    const currentYearIndex = yearsList.findIndex(y => y.id === year.id)
+    if (currentYearIndex === -1) return false
+    
+    // Check if current year has high MSD
+    const currentYearHasHighMSD = year.placements.some(p => p.msd >= 10 && p.msd <= 14)
+    if (!currentYearHasHighMSD) return false
+    
+    // Check previous year
+    if (currentYearIndex > 0) {
+      const prevYear = yearsList[currentYearIndex - 1]
+      const prevYearHasHighMSD = prevYear.placements.some(p => p.msd >= 10 && p.msd <= 14)
+      if (prevYearHasHighMSD) return true
+    }
+    
+    // Check next year
+    if (currentYearIndex < yearsList.length - 1) {
+      const nextYear = yearsList[currentYearIndex + 1]
+      const nextYearHasHighMSD = nextYear.placements.some(p => p.msd >= 10 && p.msd <= 14)
+      if (nextYearHasHighMSD) return true
+    }
+    
+    return false
+  }
+
+  // Function to calculate points for a single year
+  const computeYearPoints = (year: typeof yearsList[0]): number => {
+    if (!selectedFlow) return 0
+    const configByKey = new Map<string, unknown>()
+    for (const fc of selectedFlow.flowCriteria) {
+      configByKey.set(fc.criterion.key, fc.config)
+    }
+    let points = 0
+    const getCfg = (k: string): unknown => configByKey.get(k)
+    
+    // Calculate MSD points for this year only
+    const dys = getCfg('dysprosita')
+    const pris = getCfg('prisons')
+    const msd = getCfg('msd')
+    if (msd) {
+      if (supportsSubstitute && year.isSubstitute) {
+        // For substitute teachers, calculate partition based on weekly hours
+        const totalWeeklyHours = year.totalWeeklyHours
+        for (const pl of year.placements) {
+          let val = pl.msd
+          const threshold = readNumber(dys, 'threshold') || 10
+          const isDys = pl.msd >= threshold
+          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+          const extra = readNumber(pris, 'extraMsd')
+          if (pl.isPrison && extra) val += extra
+          
+          // Calculate partition: (school weekly hours / total weekly hours) * MSD * substitute months / 12
+          const schoolWeeklyHours = pl.weeklyHours || 0
+          // Double MSD points if MSD is 10-14 (for substitute teachers, no consecutive year requirement)
+          const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
+          const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (year.substituteMonths / 12)
+          points += partition
+        }
+      } else {
+        // For regular teachers, use the original calculation
+        for (const pl of year.placements) {
+          let val = pl.msd
+          const threshold = readNumber(dys, 'threshold') || 10
+          const isDys = pl.msd >= threshold
+          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+          const extra = readNumber(pris, 'extraMsd')
+          if (pl.isPrison && extra) val += extra
+          // Check if there are at least 2 consecutive years with MSD 10-14
+          const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(year)
+          
+          // Double MSD points if MSD is 10-14 AND at least 2 consecutive years with high MSD
+          const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14 && hasConsecutiveHighMSD) ? 2 : 1
+          const monthsFactor = pl.months / 12
+          points += val * msdMultiplier * monthsFactor
+        }
+      }
+    }
+    
+    // Note: προϋπηρεσία points are calculated only once for total experience, not per year
+    // This function only calculates MSD points for individual years
+    
+    return points
+  }
+
   useEffect(() => {
     if (flows && flows.length && !selectedFlowId) {
       setSelectedFlowId(flows[0].id)
@@ -234,92 +319,7 @@ export default function CalculatorPage() {
     event.target.value = ''
   }
 
-  // Helper function to check if there are at least 2 consecutive years with MSD 10-14
-  const hasConsecutiveYearsWithHighMSD = (year: typeof yearsList[0]): boolean => {
-    const currentYearIndex = yearsList.findIndex(y => y.id === year.id)
-    let consecutiveYears = 0
-    
-    // Check current year and previous years for any school with MSD 10-14
-    for (let i = currentYearIndex; i >= 0; i--) {
-      const checkYear = yearsList[i]
-      if (!checkYear.isSubstitute) { // Only count non-substitute years
-        const hasHighMSD = checkYear.placements.some(pl => 
-          pl.msd >= 10 && pl.msd <= 14
-        )
-        if (hasHighMSD) {
-          consecutiveYears++
-          if (consecutiveYears >= 2) {
-            return true // Found 2 consecutive years with high MSD
-          }
-        } else {
-          break // Stop counting if we find a year without high MSD
-        }
-      } else {
-        break // Stop counting if we find a substitute year
-      }
-    }
-    
-    return false
-  }
 
-  // Function to calculate points for a single year
-  const computeYearPoints = (year: typeof yearsList[0]): number => {
-    if (!selectedFlow) return 0
-    const configByKey = new Map<string, unknown>()
-    for (const fc of selectedFlow.flowCriteria) {
-      configByKey.set(fc.criterion.key, fc.config)
-    }
-    let points = 0
-    const getCfg = (k: string): unknown => configByKey.get(k)
-    
-    // Calculate MSD points for this year only
-    const dys = getCfg('dysprosita')
-    const pris = getCfg('prisons')
-    const msd = getCfg('msd')
-    if (msd) {
-      if (supportsSubstitute && year.isSubstitute) {
-        // For substitute teachers, calculate partition based on weekly hours
-        const totalWeeklyHours = year.totalWeeklyHours
-        for (const pl of year.placements) {
-          let val = pl.msd
-          const threshold = readNumber(dys, 'threshold') || 10
-          const isDys = pl.msd >= threshold
-          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
-          const extra = readNumber(pris, 'extraMsd')
-          if (pl.isPrison && extra) val += extra
-          
-          // Calculate partition: (school weekly hours / total weekly hours) * MSD * substitute months / 12
-          const schoolWeeklyHours = pl.weeklyHours || 0
-          // Double MSD points if MSD is 10-14 (for substitute teachers, no consecutive year requirement)
-          const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
-          const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (year.substituteMonths / 12)
-          points += partition
-        }
-      } else {
-        // For regular teachers, use the original calculation
-        for (const pl of year.placements) {
-          let val = pl.msd
-          const threshold = readNumber(dys, 'threshold') || 10
-          const isDys = pl.msd >= threshold
-          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
-          const extra = readNumber(pris, 'extraMsd')
-          if (pl.isPrison && extra) val += extra
-          // Check if there are at least 2 consecutive years with MSD 10-14
-          const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(year)
-          
-          // Double MSD points if MSD is 10-14 AND at least 2 consecutive years with high MSD
-          const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14 && hasConsecutiveHighMSD) ? 2 : 1
-          const monthsFactor = pl.months / 12
-          points += val * msdMultiplier * monthsFactor
-        }
-      }
-    }
-    
-         // Note: προϋπηρεσία points are calculated only once for total experience, not per year
-     // This function only calculates MSD points for individual years
-    
-    return points
-  }
 
 
 
