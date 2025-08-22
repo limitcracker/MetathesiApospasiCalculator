@@ -25,7 +25,6 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export default function CalculatorPage() {
   const { data: flows } = useSWR<FlowSummary[]>("/api/flows", fetcher)
-  const [mounted, setMounted] = useState(false)
   const [selectedFlowId, setSelectedFlowId] = useState<string>('')
   const [yearsList, setYearsList] = useState<Array<{
     id: string
@@ -60,9 +59,6 @@ export default function CalculatorPage() {
 
   // TODO Modal state
   const [showTodoModal, setShowTodoModal] = useState(false)
-
-  // Set mounted state
-  useEffect(() => setMounted(true), [])
 
   const selectedFlow = useMemo(() => flows?.find((f) => f.id === selectedFlowId), [flows, selectedFlowId])
   const enabledKeys = useMemo(() => new Set<string>(selectedFlow?.flowCriteria?.map((fc) => fc.criterion.key) ?? []), [selectedFlow])
@@ -325,7 +321,7 @@ export default function CalculatorPage() {
     return points
   }
 
-  if (!mounted) return null
+
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
