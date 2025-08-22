@@ -43,7 +43,7 @@ export default function CalculatorPage() {
       isSubstitute: false,
       totalWeeklyHours: 23,
       substituteMonths: 10,
-      placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 23 }],
+      placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }],
     },
   ])
   const [selectedYearIdx, setSelectedYearIdx] = useState(0)
@@ -530,21 +530,21 @@ export default function CalculatorPage() {
             <button
               type="button"
               className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
-              onClick={() => {
-                const nextId = Math.random().toString(36).slice(2)
-                const next = {
-                  id: nextId,
-                  year: (yearsList[yearsList.length - 1]?.year || new Date().getFullYear()) + 1,
-                  isSubstitute: false,
-                  totalWeeklyHours: 23,
-                  substituteMonths: 10,
-                  placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 23 }],
-                }
-                setYearsList((arr) => [...arr, next])
-                setSelectedYearIdx(yearsList.length)
-                // Auto-expand only the new year (collapse others)
-                setExpandedYears(new Set([nextId]))
-              }}
+                             onClick={() => {
+                 const nextId = Math.random().toString(36).slice(2)
+                 const next = {
+                   id: nextId,
+                   year: (yearsList[yearsList.length - 1]?.year || new Date().getFullYear()) + 1,
+                   isSubstitute: false,
+                   totalWeeklyHours: 23,
+                   substituteMonths: 10,
+                   placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }],
+                 }
+                 setYearsList((arr) => [...arr, next])
+                 setSelectedYearIdx(yearsList.length)
+                 // Auto-expand only the new year (collapse others)
+                 setExpandedYears(new Set([nextId]))
+               }}
             >
               + Προσθήκη έτους
             </button>
@@ -718,9 +718,19 @@ export default function CalculatorPage() {
                             // Calculate remaining hours for substitute teachers
                             let newWeeklyHours = 23 // default value
                             if (y.isSubstitute && y.totalWeeklyHours > 0) {
+                              // Calculate the sum of all current school hours
                               const currentTotalHours = y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
+                              // Calculate remaining hours
                               const remainingHours = y.totalWeeklyHours - currentTotalHours
+                              // Set the new school to the remaining hours (minimum 0)
                               newWeeklyHours = Math.max(0, remainingHours)
+                              
+                              console.log('Adding school:', {
+                                totalWeeklyHours: y.totalWeeklyHours,
+                                currentTotalHours,
+                                remainingHours,
+                                newWeeklyHours
+                              })
                             }
                             
                             setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
