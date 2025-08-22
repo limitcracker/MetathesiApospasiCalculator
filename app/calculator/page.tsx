@@ -128,15 +128,34 @@ export default function CalculatorPage() {
     const pris = getCfg('prisons')
     const msd = getCfg('msd')
     if (msd && activeYear) {
-      for (const pl of activeYear.placements) {
-        let val = pl.msd
-        const threshold = readNumber(dys, 'threshold') || 10
-        const isDys = pl.msd >= threshold
-        if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
-        const extra = readNumber(pris, 'extraMsd')
-        if (pl.isPrison && extra) val += extra
-        const monthsFactor = (supportsSubstitute && activeYear.isSubstitute) ? (activeYear.substituteMonths / 12) : (pl.months / 12)
-        points += val * monthsFactor
+      if (supportsSubstitute && activeYear.isSubstitute) {
+        // For substitute teachers, calculate partition based on weekly hours
+        const totalWeeklyHours = activeYear.totalWeeklyHours
+        for (const pl of activeYear.placements) {
+          let val = pl.msd
+          const threshold = readNumber(dys, 'threshold') || 10
+          const isDys = pl.msd >= threshold
+          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+          const extra = readNumber(pris, 'extraMsd')
+          if (pl.isPrison && extra) val += extra
+          
+          // Calculate partition: (school weekly hours / total weekly hours) * MSD * substitute months / 12
+          const schoolWeeklyHours = pl.weeklyHours || 0
+          const partition = (schoolWeeklyHours / totalWeeklyHours) * val * (activeYear.substituteMonths / 12)
+          points += partition
+        }
+      } else {
+        // For regular teachers, use the original calculation
+        for (const pl of activeYear.placements) {
+          let val = pl.msd
+          const threshold = readNumber(dys, 'threshold') || 10
+          const isDys = pl.msd >= threshold
+          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+          const extra = readNumber(pris, 'extraMsd')
+          if (pl.isPrison && extra) val += extra
+          const monthsFactor = pl.months / 12
+          points += val * monthsFactor
+        }
       }
     }
     if (hasStudies) points += readNumber(getCfg('studies'), 'points')
@@ -230,15 +249,34 @@ export default function CalculatorPage() {
     const pris = getCfg('prisons')
     const msd = getCfg('msd')
     if (msd) {
-      for (const pl of year.placements) {
-        let val = pl.msd
-        const threshold = readNumber(dys, 'threshold') || 10
-        const isDys = pl.msd >= threshold
-        if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
-        const extra = readNumber(pris, 'extraMsd')
-        if (pl.isPrison && extra) val += extra
-        const monthsFactor = (supportsSubstitute && year.isSubstitute) ? (year.substituteMonths / 12) : (pl.months / 12)
-        points += val * monthsFactor
+      if (supportsSubstitute && year.isSubstitute) {
+        // For substitute teachers, calculate partition based on weekly hours
+        const totalWeeklyHours = year.totalWeeklyHours
+        for (const pl of year.placements) {
+          let val = pl.msd
+          const threshold = readNumber(dys, 'threshold') || 10
+          const isDys = pl.msd >= threshold
+          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+          const extra = readNumber(pris, 'extraMsd')
+          if (pl.isPrison && extra) val += extra
+          
+          // Calculate partition: (school weekly hours / total weekly hours) * MSD * substitute months / 12
+          const schoolWeeklyHours = pl.weeklyHours || 0
+          const partition = (schoolWeeklyHours / totalWeeklyHours) * val * (year.substituteMonths / 12)
+          points += partition
+        }
+      } else {
+        // For regular teachers, use the original calculation
+        for (const pl of year.placements) {
+          let val = pl.msd
+          const threshold = readNumber(dys, 'threshold') || 10
+          const isDys = pl.msd >= threshold
+          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+          const extra = readNumber(pris, 'extraMsd')
+          if (pl.isPrison && extra) val += extra
+          const monthsFactor = pl.months / 12
+          points += val * monthsFactor
+        }
       }
     }
     
@@ -551,6 +589,25 @@ export default function CalculatorPage() {
                                 Σύνολο ωρών από σχολεία: <span className="font-semibold">{rowSum}</span> 
                                 {rowSum === y.totalWeeklyHours ? '' : ` (πρέπει να ισούται με ${y.totalWeeklyHours})`}
                               </div>
+                              
+                              {/* Show partition calculation breakdown */}
+                              {rowSum === y.totalWeeklyHours && y.totalWeeklyHours > 0 && (
+                                <div className="text-sm p-3 rounded-lg border border-blue-200 bg-blue-50">
+                                  <div className="font-semibold text-blue-900 mb-2">Υπολογισμός Μορίων ανά Σχολείο:</div>
+                                  {y.placements.map((pl, plIdx) => {
+                                    const schoolWeeklyHours = pl.weeklyHours || 0
+                                    const partition = (schoolWeeklyHours / y.totalWeeklyHours) * pl.msd * (y.substituteMonths / 12)
+                                    return (
+                                      <div key={plIdx} className="text-blue-800 mb-1">
+                                        <span className="font-medium">{pl.schoolName || `Σχολείο ${plIdx + 1}`}:</span>
+                                        <span className="ml-2">
+                                          ({schoolWeeklyHours}/{y.totalWeeklyHours} × {pl.msd} × {y.substituteMonths}/12) = {partition.toFixed(2)} μόρια
+                                        </span>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
                             </>
                           )}
                         </div>
