@@ -224,7 +224,7 @@ export default function CalculatorPage() {
         } else {
           alert('Μη έγκυρο αρχείο δεδομένων.')
         }
-      } catch (error) {
+      } catch {
         alert('Σφάλμα κατά την ανάγνωση του αρχείου.')
       }
     }
