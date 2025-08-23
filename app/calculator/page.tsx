@@ -323,6 +323,7 @@ export default function CalculatorPage() {
     <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
       <div className="text-center space-y-4">
         <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
+        {/* Calculator for teacher transfers and secondments */}
         <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
         
         {/* Subtle upcoming features button */}
