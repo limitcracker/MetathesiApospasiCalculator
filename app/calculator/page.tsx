@@ -213,7 +213,7 @@ export default function CalculatorPage() {
       if (hasFirstPreference) points += readNumber(getCfg('firstPreference'), 'points')
       
       // Add προϋπηρεσία points (calculated once for total experience)
-      if (selectedFlowId !== flows?.find(f => f.slug === 'neodioristos')?.id) {
+      if (flows && selectedFlowId !== flows.find(f => f.slug === 'neodioristos')?.id) {
         let totalMonths = 0
         for (const year of yearsList) {
           if (supportsSubstitute && year.isSubstitute) {
@@ -321,9 +321,9 @@ export default function CalculatorPage() {
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
-        <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
+             <div className="text-center space-y-4">
+         <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
+         <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
          
          {/* Subtle upcoming features button */}
          <button
@@ -484,12 +484,12 @@ export default function CalculatorPage() {
       </section>
 
       {/* Διαχείριση Ετών (δυναμική λίστα) */}
-      {selectedFlowId !== flows?.find(f => f.slug === 'neodioristos')?.id && (
+      {flows && selectedFlowId !== flows.find(f => f.slug === 'neodioristos')?.id && (
         <section className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h2 className="text-xl font-semibold text-gray-900">Έτη Εργασίας</h2>
-              {enabledKeys.has('proypiresia') && selectedFlowId !== flows?.find(f => f.slug === 'neodioristos')?.id && (
+              {enabledKeys.has('proypiresia') && flows && selectedFlowId !== flows.find(f => f.slug === 'neodioristos')?.id && (
                 <div className="text-sm text-blue-700 bg-blue-100 px-3 py-1 rounded-full font-medium">
                   {(() => {
                     let totalMonths = 0
@@ -565,8 +565,8 @@ export default function CalculatorPage() {
                   {/* Reorder and Duplicate Controls */}
                   <div className="flex items-center gap-1 ml-auto">
                     {/* Up Arrow */}
-                    <button
-                      type="button"
+                  <button
+                    type="button"
                       className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={idx === 0}
                       onClick={() => {
@@ -637,17 +637,17 @@ export default function CalculatorPage() {
                     <button
                       type="button"
                       className="px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium"
-                      onClick={() => {
-                        setYearsList((arr) => arr.filter((_, i) => i !== idx))
-                        if (idx === selectedYearIdx) setSelectedYearIdx(0)
-                        // Remove from expanded set
-                        const newExpanded = new Set(expandedYears)
-                        newExpanded.delete(y.id)
-                        setExpandedYears(newExpanded)
-                      }}
-                    >
-                      Διαγραφή
-                    </button>
+                    onClick={() => {
+                      setYearsList((arr) => arr.filter((_, i) => i !== idx))
+                      if (idx === selectedYearIdx) setSelectedYearIdx(0)
+                      // Remove from expanded set
+                      const newExpanded = new Set(expandedYears)
+                      newExpanded.delete(y.id)
+                      setExpandedYears(newExpanded)
+                    }}
+                  >
+                    Διαγραφή
+                  </button>
                   </div>
                 </div>
 
@@ -703,7 +703,7 @@ export default function CalculatorPage() {
                             </button>
                           </div>
                         </div>
-                          {y.isSubstitute && (
+                        {y.isSubstitute && (
                             <>
                               <label className="flex flex-col gap-2">
                                 <span className="text-sm font-medium text-gray-700">Συνολικές εβδομαδιαίες ώρες (ωράριο)</span>
@@ -830,14 +830,14 @@ export default function CalculatorPage() {
                           <div key={pIdx} className="grid grid-cols-1 md:grid-cols-7 gap-3 items-center p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
                             <div className="flex items-center gap-3 md:col-span-2">
                               <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{pIdx + 1}</span>
-                              <input 
-                                id={`school-name-${y.id}-${pIdx}`}
-                                name={`schoolName-${y.id}-${pIdx}`}
-                                className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                                placeholder="Όνομα σχολείου" 
-                                value={p.schoolName} 
-                                onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, schoolName: e.target.value } : pp)) } : it)))} 
-                              />
+                                                             <input 
+                                 id={`school-name-${y.id}-${pIdx}`}
+                                 name={`schoolName-${y.id}-${pIdx}`}
+                                 className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                 placeholder="Όνομα σχολείου" 
+                                 value={p.schoolName} 
+                                 onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, schoolName: e.target.value } : pp)) } : it)))} 
+                               />
                             </div>
                             {y.isSubstitute && (
                               <label className="flex items-center gap-2">
@@ -987,56 +987,56 @@ export default function CalculatorPage() {
                               </button>
                               
                               {/* Delete Button */}
-                              <button 
-                                type="button" 
-                                className="px-3 py-2 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium" 
-                                onClick={() => {
-                                  // Remove the school
-                                  const newPlacements = y.placements.filter((_, j) => j !== pIdx)
+                            <button 
+                              type="button" 
+                              className="px-3 py-2 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium" 
+                              onClick={() => {
+                                // Remove the school
+                                const newPlacements = y.placements.filter((_, j) => j !== pIdx)
+                                
+                                // If this is a substitute teacher and we have remaining schools, redistribute hours
+                                if (y.isSubstitute && y.totalWeeklyHours > 0 && newPlacements.length > 0) {
+                                  const remainingHours = y.totalWeeklyHours
+                                  const hoursPerSchool = Math.floor(remainingHours / newPlacements.length)
+                                  const extraHours = remainingHours % newPlacements.length
                                   
-                                  // If this is a substitute teacher and we have remaining schools, redistribute hours
-                                  if (y.isSubstitute && y.totalWeeklyHours > 0 && newPlacements.length > 0) {
-                                    const remainingHours = y.totalWeeklyHours
-                                    const hoursPerSchool = Math.floor(remainingHours / newPlacements.length)
-                                    const extraHours = remainingHours % newPlacements.length
-                                    
-                                    const updatedPlacements = newPlacements.map((placement, index) => ({
-                                      ...placement,
-                                      weeklyHours: hoursPerSchool + (index < extraHours ? 1 : 0)
-                                    }))
-                                    
-                                    setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
-                                      ...it, 
-                                      placements: updatedPlacements 
-                                    } : it)))
-                                  } else {
-                                    setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
-                                      ...it, 
-                                      placements: newPlacements 
-                                    } : it)))
-                                  }
-                                }}
-                              >
-                                Διαγραφή
-                              </button>
+                                  const updatedPlacements = newPlacements.map((placement, index) => ({
+                                    ...placement,
+                                    weeklyHours: hoursPerSchool + (index < extraHours ? 1 : 0)
+                                  }))
+                                  
+                                  setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                    ...it, 
+                                    placements: updatedPlacements 
+                                  } : it)))
+                                } else {
+                                  setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                    ...it, 
+                                    placements: newPlacements 
+                                  } : it)))
+                                }
+                              }}
+                            >
+                              Διαγραφή
+                            </button>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
-                  </div>
                 )}
               </div>
             )
           })}
         </div>
       </section>
+      )}
 
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
-        <div className="text-2xl font-bold">Σύνολο Μορίων</div>
-        <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
+             <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
+         <div className="text-2xl font-bold">Σύνολο Μορίων</div>
+         <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
         <div className="text-blue-100 text-sm mt-1">μόρια</div>
-      </div>
+       </div>
 
        {/* TODO Modal */}
        {showTodoModal && (
@@ -1093,7 +1093,7 @@ export default function CalculatorPage() {
                  </div>
                </div>
                
-                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200">
+                               <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200">
                   <div className="text-xs text-gray-500">
                     <span>Ανάπτυξη: </span>
                     <a 
@@ -1120,5 +1120,3 @@ export default function CalculatorPage() {
      </main>
    )
  }
-
-
