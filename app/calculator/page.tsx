@@ -329,17 +329,17 @@ export default function CalculatorPage() {
          <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
          <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
          
-         {/* Prominent modal button */}
+         {/* Subtle upcoming features button */}
          <button
             type="button"
             onClick={() => setShowTodoModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors shadow-sm"
+            className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded text-sm transition-colors"
             title="Επερχόμενα Χαρακτηριστικά"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
-            <span>Επερχόμενα Χαρακτηριστικά</span>
+            <span className="text-xs">Επερχόμενα</span>
           </button>
        </div>
 
@@ -608,17 +608,33 @@ export default function CalculatorPage() {
                       <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
                         <h4 className="font-semibold text-gray-900 border-b border-gray-200 pb-2">Αναπληρωτής Εκπαιδευτικός</h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                          <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
-                                                         <input 
-                               id={`substitute-${y.id}`}
-                               name={`substitute-${y.id}`}
-                               type="checkbox" 
-                               checked={y.isSubstitute} 
-                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: e.target.checked } : it)))}
-                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                             />
-                            <span className="font-medium text-gray-900">Αναπληρωτής (έτος)</span>
-                          </label>
+                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <span className="font-medium text-gray-900">Κατάσταση:</span>
+                            <div className="flex bg-gray-200 rounded-lg p-1">
+                              <button
+                                type="button"
+                                onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: false } : it)))}
+                                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                                  !y.isSubstitute 
+                                    ? 'bg-white text-gray-900 shadow-sm' 
+                                    : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                              >
+                                Μόνιμος
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: true } : it)))}
+                                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                                  y.isSubstitute 
+                                    ? 'bg-white text-gray-900 shadow-sm' 
+                                    : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                              >
+                                Αναπληρωτής
+                              </button>
+                            </div>
+                          </div>
                           {y.isSubstitute && (
                             <>
                               <label className="flex flex-col gap-2">
@@ -870,7 +886,7 @@ export default function CalculatorPage() {
              <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
          <div className="text-2xl font-bold">Σύνολο Μορίων</div>
          <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
-         <div className="text-blue-100 text-sm mt-1">μορία</div>
+         <div className="text-blue-100 text-sm mt-1">μόρια</div>
        </div>
 
        {/* TODO Modal */}
