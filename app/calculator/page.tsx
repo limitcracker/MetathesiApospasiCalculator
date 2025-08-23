@@ -329,13 +329,13 @@ export default function CalculatorPage() {
          <button
             type="button"
             onClick={() => setShowTodoModal(true)}
-            className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded text-sm transition-colors"
+           className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded text-sm transition-colors"
             title="Επερχόμενα Χαρακτηριστικά"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
-            <span className="text-xs">Επερχόμενα</span>
+           <span className="text-xs">Επερχόμενα</span>
           </button>
        </div>
 
@@ -703,7 +703,7 @@ export default function CalculatorPage() {
                             </button>
                           </div>
                         </div>
-                        {y.isSubstitute && (
+                          {y.isSubstitute && (
                             <>
                               <label className="flex flex-col gap-2">
                                 <span className="text-sm font-medium text-gray-700">Συνολικές εβδομαδιαίες ώρες (ωράριο)</span>
@@ -1022,8 +1022,8 @@ export default function CalculatorPage() {
                             </div>
                           </div>
                         ))}
-                      </div>
                     </div>
+                  </div>
                 )}
               </div>
             )
