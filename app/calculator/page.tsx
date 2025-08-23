@@ -764,19 +764,14 @@ export default function CalculatorPage() {
                               {rowSum === y.totalWeeklyHours && y.totalWeeklyHours > 0 && (
                                 <div className="text-sm p-3 rounded-lg border border-blue-200 bg-blue-50">
                                   <div className="font-semibold text-blue-900 mb-2">Υπολογισμός Μορίων ανά Σχολείο:</div>
-                                  {y.placements.map((pl, plIdx) => {
-                                    const schoolWeeklyHours = pl.weeklyHours || 0
-                                    const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
-                                    const partition = (schoolWeeklyHours / y.totalWeeklyHours) * pl.msd * msdMultiplier * (y.substituteMonths / 12)
-                                    return (
-                                      <div key={plIdx} className="text-blue-800 mb-1">
-                                        <span className="font-medium">{pl.schoolName || `Σχολείο ${plIdx + 1}`}:</span>
-                                        <span className="ml-2">
-                                          ({schoolWeeklyHours}/{y.totalWeeklyHours} × {pl.msd} {msdMultiplier > 1 ? `× ${msdMultiplier}` : ''} × {y.substituteMonths}/12) = {partition.toFixed(2)} μόρια
-                                        </span>
-                                      </div>
-                                    )
-                                  })}
+                                  {y.placements.map((pl, plIdx) => (
+                                    <div key={plIdx} className="text-blue-800 mb-1">
+                                      <span className="font-medium">{pl.schoolName || `Σχολείο ${plIdx + 1}`}:</span>
+                                      <span className="ml-2">
+                                        ({(pl.weeklyHours || 0)}/{y.totalWeeklyHours} × {pl.msd} {(pl.msd >= 10 && pl.msd <= 14) ? 2 : 1 > 1 ? `× ${(pl.msd >= 10 && pl.msd <= 14) ? 2 : 1}` : ''} × {y.substituteMonths}/12) = {((pl.weeklyHours || 0) / y.totalWeeklyHours * pl.msd * ((pl.msd >= 10 && pl.msd <= 14) ? 2 : 1) * (y.substituteMonths / 12)).toFixed(2)} μόρια
+                                      </span>
+                                    </div>
+                                  ))}
                                 </div>
                               )}
                             </>
