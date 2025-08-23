@@ -1031,7 +1031,6 @@ export default function CalculatorPage() {
           })}
         </div>
       </section>
-      )}
 
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
         <div className="text-2xl font-bold">Σύνολο Μορίων</div>
