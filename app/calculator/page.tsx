@@ -321,35 +321,35 @@ export default function CalculatorPage() {
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
-             <div className="text-center space-y-4">
-         <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
-         <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
-         
-         {/* Subtle upcoming features button */}
-         <button
-            type="button"
-            onClick={() => setShowTodoModal(true)}
-           className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded text-sm transition-colors"
-            title="Επερχόμενα Χαρακτηριστικά"
-          >
-           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-           <span className="text-xs">Επερχόμενα</span>
-          </button>
-       </div>
+      <div className="text-center space-y-4">
+        <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
+        <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
+        
+        {/* Subtle upcoming features button */}
+        <button
+          type="button"
+          onClick={() => setShowTodoModal(true)}
+          className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded text-sm transition-colors"
+          title="Επερχόμενα Χαρακτηριστικά"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <span className="text-xs">Επερχόμενα</span>
+        </button>
+      </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <label className="flex flex-col gap-2 flex-1">
             <span className="text-sm font-semibold text-blue-900">Επιλογή Ροής</span>
-                         <select 
-               id="flow-select"
-               name="flow-select"
-               value={selectedFlowId} 
-               onChange={(e) => setSelectedFlowId(e.target.value)} 
-               className="border border-blue-300 rounded-lg p-3 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-             >
+            <select 
+              id="flow-select"
+              name="flow-select"
+              value={selectedFlowId} 
+              onChange={(e) => setSelectedFlowId(e.target.value)} 
+              className="border border-blue-300 rounded-lg p-3 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            >
               {flows?.map((f) => (
                 <option key={f.id} value={f.id}>{f.name}</option>
               ))}
@@ -390,29 +390,29 @@ export default function CalculatorPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {enabledKeys.has('marriage') && (
             <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                             <input 
-                 id="marriage-checkbox"
-                 name="marriage"
-                 type="checkbox" 
-                 checked={hasMarriage} 
-                 onChange={(e) => setHasMarriage(e.target.checked)}
-                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-               />
+              <input 
+                id="marriage-checkbox"
+                name="marriage"
+                type="checkbox" 
+                checked={hasMarriage} 
+                onChange={(e) => setHasMarriage(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
               <span className="font-medium text-gray-900">Γάμος</span>
             </label>
           )}
           {enabledKeys.has('children') && (
             <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
               <span className="font-medium text-gray-900">Παιδιά:</span>
-                                                           <input 
-                  id="children-count"
-                  name="childrenCount"
-                  type="number" 
-                  min={0} 
-                  value={childrenCount} 
-                  onChange={(e) => setChildrenCount(parseInt(e.target.value))} 
-                  className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+              <input 
+                id="children-count"
+                name="childrenCount"
+                type="number" 
+                min={0} 
+                value={childrenCount} 
+                onChange={(e) => setChildrenCount(parseInt(e.target.value))} 
+                className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </label>
           )}
           {enabledKeys.has('synypiretisi') && (
