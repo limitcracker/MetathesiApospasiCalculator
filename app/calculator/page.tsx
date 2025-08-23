@@ -319,15 +319,11 @@ export default function CalculatorPage() {
     event.target.value = ''
   }
 
-
-
-
-
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
-             <div className="text-center space-y-4">
-         <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
-         <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
+      <div className="text-center space-y-4">
+        <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
+        <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
          
          {/* Subtle upcoming features button */}
          <button
@@ -566,20 +562,93 @@ export default function CalculatorPage() {
                     {computeYearPoints(y).toFixed(1)} μόρια
                   </div>
                   
-                  <button
-                    type="button"
-                    className="ml-auto px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium"
-                    onClick={() => {
-                      setYearsList((arr) => arr.filter((_, i) => i !== idx))
-                      if (idx === selectedYearIdx) setSelectedYearIdx(0)
-                      // Remove from expanded set
-                      const newExpanded = new Set(expandedYears)
-                      newExpanded.delete(y.id)
-                      setExpandedYears(newExpanded)
-                    }}
-                  >
-                    Διαγραφή
-                  </button>
+                  {/* Reorder and Duplicate Controls */}
+                  <div className="flex items-center gap-1 ml-auto">
+                    {/* Up Arrow */}
+                    <button
+                      type="button"
+                      className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={idx === 0}
+                      onClick={() => {
+                        if (idx > 0) {
+                          const newYearsList = [...yearsList]
+                          const temp = newYearsList[idx]
+                          newYearsList[idx] = newYearsList[idx - 1]
+                          newYearsList[idx - 1] = temp
+                          setYearsList(newYearsList)
+                          setSelectedYearIdx(idx - 1)
+                        }
+                      }}
+                      title="Μετακίνηση πάνω"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                    </button>
+                    
+                    {/* Down Arrow */}
+                    <button
+                      type="button"
+                      className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={idx === yearsList.length - 1}
+                      onClick={() => {
+                        if (idx < yearsList.length - 1) {
+                          const newYearsList = [...yearsList]
+                          const temp = newYearsList[idx]
+                          newYearsList[idx] = newYearsList[idx + 1]
+                          newYearsList[idx + 1] = temp
+                          setYearsList(newYearsList)
+                          setSelectedYearIdx(idx + 1)
+                        }
+                      }}
+                      title="Μετακίνηση κάτω"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    {/* Duplicate Button */}
+                    <button
+                      type="button"
+                      className="px-2 py-1 text-sm border border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-colors font-medium"
+                      onClick={() => {
+                        const duplicatedYear = {
+                          ...y,
+                          id: Math.random().toString(36).slice(2),
+                          year: y.year + 1, // Increment year for the duplicate
+                        }
+                        const newYearsList = [...yearsList]
+                        newYearsList.splice(idx + 1, 0, duplicatedYear)
+                        setYearsList(newYearsList)
+                        setSelectedYearIdx(idx + 1)
+                        // Expand the duplicated year
+                        setExpandedYears(new Set([duplicatedYear.id]))
+                      }}
+                      title="Διπλασιασμός έτους"
+                    >
+                      <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Διπλ
+                    </button>
+                    
+                    {/* Delete Button */}
+                    <button
+                      type="button"
+                      className="px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium"
+                      onClick={() => {
+                        setYearsList((arr) => arr.filter((_, i) => i !== idx))
+                        if (idx === selectedYearIdx) setSelectedYearIdx(0)
+                        // Remove from expanded set
+                        const newExpanded = new Set(expandedYears)
+                        newExpanded.delete(y.id)
+                        setExpandedYears(newExpanded)
+                      }}
+                    >
+                      Διαγραφή
+                    </button>
+                  </div>
                 </div>
 
                 {/* Accordion Content */}
@@ -758,17 +827,17 @@ export default function CalculatorPage() {
                       </div>
                       <div className="space-y-3">
                         {y.placements.map((p, pIdx) => (
-                          <div key={pIdx} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-center p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                          <div key={pIdx} className="grid grid-cols-1 md:grid-cols-7 gap-3 items-center p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
                             <div className="flex items-center gap-3 md:col-span-2">
                               <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{pIdx + 1}</span>
-                                                             <input 
-                                 id={`school-name-${y.id}-${pIdx}`}
-                                 name={`schoolName-${y.id}-${pIdx}`}
-                                 className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                                 placeholder="Όνομα σχολείου" 
-                                 value={p.schoolName} 
-                                 onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, schoolName: e.target.value } : pp)) } : it)))} 
-                               />
+                              <input 
+                                id={`school-name-${y.id}-${pIdx}`}
+                                name={`schoolName-${y.id}-${pIdx}`}
+                                className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                placeholder="Όνομα σχολείου" 
+                                value={p.schoolName} 
+                                onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, schoolName: e.target.value } : pp)) } : it)))} 
+                              />
                             </div>
                             {y.isSubstitute && (
                               <label className="flex items-center gap-2">
@@ -835,38 +904,122 @@ export default function CalculatorPage() {
                                />
                               <span className="text-sm font-medium text-gray-700">Φυλακή</span>
                             </label>
-                            <button 
-                              type="button" 
-                              className="px-3 py-2 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium" 
-                              onClick={() => {
-                                // Remove the school
-                                const newPlacements = y.placements.filter((_, j) => j !== pIdx)
-                                
-                                // If this is a substitute teacher and we have remaining schools, redistribute hours
-                                if (y.isSubstitute && y.totalWeeklyHours > 0 && newPlacements.length > 0) {
-                                  const remainingHours = y.totalWeeklyHours
-                                  const hoursPerSchool = Math.floor(remainingHours / newPlacements.length)
-                                  const extraHours = remainingHours % newPlacements.length
+                            {/* Reorder and Duplicate Controls for Schools */}
+                            <div className="flex items-center gap-1">
+                              {/* Up Arrow */}
+                              <button
+                                type="button"
+                                className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={pIdx === 0}
+                                onClick={() => {
+                                  if (pIdx > 0) {
+                                    const newPlacements = [...y.placements]
+                                    const temp = newPlacements[pIdx]
+                                    newPlacements[pIdx] = newPlacements[pIdx - 1]
+                                    newPlacements[pIdx - 1] = temp
+                                    setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: newPlacements } : it)))
+                                  }
+                                }}
+                                title="Μετακίνηση πάνω"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                </svg>
+                              </button>
+                              
+                              {/* Down Arrow */}
+                              <button
+                                type="button"
+                                className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={pIdx === y.placements.length - 1}
+                                onClick={() => {
+                                  if (pIdx < y.placements.length - 1) {
+                                    const newPlacements = [...y.placements]
+                                    const temp = newPlacements[pIdx]
+                                    newPlacements[pIdx] = newPlacements[pIdx + 1]
+                                    newPlacements[pIdx + 1] = temp
+                                    setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: newPlacements } : it)))
+                                  }
+                                }}
+                                title="Μετακίνηση κάτω"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </button>
+                              
+                              {/* Duplicate Button */}
+                              <button
+                                type="button"
+                                className="px-2 py-1 text-sm border border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-colors font-medium"
+                                onClick={() => {
+                                  const duplicatedPlacement = { ...p }
+                                  const newPlacements = [...y.placements]
+                                  newPlacements.splice(pIdx + 1, 0, duplicatedPlacement)
                                   
-                                  const updatedPlacements = newPlacements.map((placement, index) => ({
-                                    ...placement,
-                                    weeklyHours: hoursPerSchool + (index < extraHours ? 1 : 0)
-                                  }))
+                                  // If this is a substitute teacher, redistribute hours
+                                  if (y.isSubstitute && y.totalWeeklyHours > 0) {
+                                    const hoursPerSchool = Math.floor(y.totalWeeklyHours / newPlacements.length)
+                                    const extraHours = y.totalWeeklyHours % newPlacements.length
+                                    
+                                    const updatedPlacements = newPlacements.map((placement, index) => ({
+                                      ...placement,
+                                      weeklyHours: hoursPerSchool + (index < extraHours ? 1 : 0)
+                                    }))
+                                    
+                                    setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                      ...it, 
+                                      placements: updatedPlacements 
+                                    } : it)))
+                                  } else {
+                                    setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                      ...it, 
+                                      placements: newPlacements 
+                                    } : it)))
+                                  }
+                                }}
+                                title="Διπλασιασμός σχολείου"
+                              >
+                                <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                Διπλ
+                              </button>
+                              
+                              {/* Delete Button */}
+                              <button 
+                                type="button" 
+                                className="px-3 py-2 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium" 
+                                onClick={() => {
+                                  // Remove the school
+                                  const newPlacements = y.placements.filter((_, j) => j !== pIdx)
                                   
-                                  setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
-                                    ...it, 
-                                    placements: updatedPlacements 
-                                  } : it)))
-                                } else {
-                                  setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
-                                    ...it, 
-                                    placements: newPlacements 
-                                  } : it)))
-                                }
-                              }}
-                            >
-                              Διαγραφή
-                            </button>
+                                  // If this is a substitute teacher and we have remaining schools, redistribute hours
+                                  if (y.isSubstitute && y.totalWeeklyHours > 0 && newPlacements.length > 0) {
+                                    const remainingHours = y.totalWeeklyHours
+                                    const hoursPerSchool = Math.floor(remainingHours / newPlacements.length)
+                                    const extraHours = remainingHours % newPlacements.length
+                                    
+                                    const updatedPlacements = newPlacements.map((placement, index) => ({
+                                      ...placement,
+                                      weeklyHours: hoursPerSchool + (index < extraHours ? 1 : 0)
+                                    }))
+                                    
+                                    setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                      ...it, 
+                                      placements: updatedPlacements 
+                                    } : it)))
+                                  } else {
+                                    setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                      ...it, 
+                                      placements: newPlacements 
+                                    } : it)))
+                                  }
+                                }}
+                              >
+                                Διαγραφή
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -880,13 +1033,11 @@ export default function CalculatorPage() {
       </section>
       )}
 
-
-
-             <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
-         <div className="text-2xl font-bold">Σύνολο Μορίων</div>
-         <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
-         <div className="text-blue-100 text-sm mt-1">μόρια</div>
-       </div>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
+        <div className="text-2xl font-bold">Σύνολο Μορίων</div>
+        <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
+        <div className="text-blue-100 text-sm mt-1">μόρια</div>
+      </div>
 
        {/* TODO Modal */}
        {showTodoModal && (
@@ -943,7 +1094,7 @@ export default function CalculatorPage() {
                  </div>
                </div>
                
-                               <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200">
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200">
                   <div className="text-xs text-gray-500">
                     <span>Ανάπτυξη: </span>
                     <a 
