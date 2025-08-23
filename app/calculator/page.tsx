@@ -603,38 +603,37 @@ export default function CalculatorPage() {
                       </label>
                     </div>
 
-                    {/* Substitute Teacher Fields */}
+                    {/* Status Selection */}
                     {supportsSubstitute && (
                       <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-                        <h4 className="font-semibold text-gray-900 border-b border-gray-200 pb-2">Αναπληρωτής Εκπαιδευτικός</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <span className="font-medium text-gray-900">Κατάσταση:</span>
-                            <div className="flex bg-gray-200 rounded-lg p-1">
-                              <button
-                                type="button"
-                                onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: false } : it)))}
-                                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                                  !y.isSubstitute 
-                                    ? 'bg-white text-gray-900 shadow-sm' 
-                                    : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                              >
-                                Μόνιμος
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: true } : it)))}
-                                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                                  y.isSubstitute 
-                                    ? 'bg-white text-gray-900 shadow-sm' 
-                                    : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                              >
-                                Αναπληρωτής
-                              </button>
-                            </div>
+                        <h4 className="font-semibold text-gray-900 border-b border-gray-200 pb-2">Κατάσταση</h4>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <span className="font-medium text-gray-900">Κατάσταση:</span>
+                          <div className="flex bg-gray-200 rounded-lg p-1">
+                            <button
+                              type="button"
+                              onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: false } : it)))}
+                              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                                !y.isSubstitute 
+                                  ? 'bg-white text-gray-900 shadow-sm' 
+                                  : 'text-gray-600 hover:text-gray-900'
+                              }`}
+                            >
+                              Μόνιμος
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: true } : it)))}
+                              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                                y.isSubstitute 
+                                  ? 'bg-white text-gray-900 shadow-sm' 
+                                  : 'text-gray-600 hover:text-gray-900'
+                              }`}
+                            >
+                              Αναπληρωτής
+                            </button>
                           </div>
+                        </div>
                           {y.isSubstitute && (
                             <>
                               <label className="flex flex-col gap-2">
