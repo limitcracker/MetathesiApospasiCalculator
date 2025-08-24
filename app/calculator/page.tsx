@@ -479,7 +479,7 @@ export default function CalculatorPage() {
               <div key={y.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
                 <div className="flex items-center gap-4 mb-4">
                   <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{idx + 1}</span>
-                  <span className="font-medium">Έτος {y.year}</span>
+                  <span className="font-medium text-gray-900">Έτος {y.year}</span>
                   <button
                     type="button"
                     className="px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium"
@@ -490,7 +490,7 @@ export default function CalculatorPage() {
                 </div>
                 
                 {/* Basic year info */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <label className="flex flex-col gap-2">
                     <span className="text-sm font-medium text-gray-700">Έτος</span>
                     <input
@@ -504,76 +504,77 @@ export default function CalculatorPage() {
                     />
                   </label>
                   
-                                     {supportsSubstitute && (
-                     <label className="flex flex-col gap-2">
-                       <span className="text-sm font-medium text-gray-700">Κατάσταση</span>
-                       <div className="flex bg-gray-200 rounded-lg p-1">
-                         <button
-                           type="button"
-                           onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: false } : it)))}
-                           className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                             !y.isSubstitute 
-                               ? 'bg-white text-gray-900 shadow-sm' 
-                               : 'text-gray-600 hover:text-gray-900'
-                           }`}
-                         >
-                           Μόνιμος
-                         </button>
-                         <button
-                           type="button"
-                           onClick={() => {
-                             setYearsList((arr) => arr.map((it, i) => {
-                               if (i === idx) {
-                                 // When switching to substitute, set the first school's weekly hours to total hours
-                                 const updatedPlacements = it.placements.map((p, pIdx) => 
-                                   pIdx === 0 ? { ...p, weeklyHours: it.totalWeeklyHours } : p
-                                 )
-                                 return { ...it, isSubstitute: true, placements: updatedPlacements }
-                               }
-                               return it
-                             }))
-                           }}
-                           className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                             y.isSubstitute 
-                               ? 'bg-white text-gray-900 shadow-sm' 
-                               : 'text-gray-600 hover:text-gray-900'
-                           }`}
-                         >
-                           Αναπληρωτής
-                         </button>
-                       </div>
-                     </label>
-                   )}
-                   
-                                      {supportsSubstitute && y.isSubstitute && (
-                     <>
-                       <label className="flex flex-col gap-2">
-                         <span className="text-sm font-medium text-gray-700">Συνολικές εβδομαδιαίες ώρες (ωράριο)</span>
-                         <input 
-                           type="number" 
-                           min={0} 
-                           value={y.totalWeeklyHours} 
-                           onChange={(e) => {
-                             const newTotalHours = parseInt(e.target.value) || 0
-                             setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, totalWeeklyHours: newTotalHours } : it)))
-                           }} 
-                           className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                         />
-                       </label>
-                       <label className="flex flex-col gap-2">
-                         <span className="text-sm font-medium text-gray-700">Μήνες ως Αναπληρωτής</span>
-                         <input 
-                           type="number" 
-                           min={0} 
-                           max={10} 
-                           value={y.substituteMonths} 
-                           onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, substituteMonths: parseInt(e.target.value) || 0 } : it)))} 
-                           className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                         />
-                       </label>
-                     </>
-                   )}
-                 </div>
+                  {supportsSubstitute && (
+                    <label className="flex flex-col gap-2">
+                      <span className="text-sm font-medium text-gray-700">Κατάσταση</span>
+                      <div className="flex bg-gray-200 rounded-lg p-1">
+                        <button
+                          type="button"
+                          onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: false } : it)))}
+                          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                            !y.isSubstitute 
+                              ? 'bg-white text-gray-900 shadow-sm' 
+                              : 'text-gray-600 hover:text-gray-900'
+                          }`}
+                        >
+                          Μόνιμος
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setYearsList((arr) => arr.map((it, i) => {
+                              if (i === idx) {
+                                // When switching to substitute, set the first school's weekly hours to total hours
+                                const updatedPlacements = it.placements.map((p, pIdx) => 
+                                  pIdx === 0 ? { ...p, weeklyHours: it.totalWeeklyHours } : p
+                                )
+                                return { ...it, isSubstitute: true, placements: updatedPlacements }
+                              }
+                              return it
+                            }))
+                          }}
+                          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                            y.isSubstitute 
+                              ? 'bg-white text-gray-900 shadow-sm' 
+                              : 'text-gray-600 hover:text-gray-900'
+                          }`}
+                        >
+                          Αναπληρωτής
+                        </button>
+                      </div>
+                    </label>
+                  )}
+                  
+                  {supportsSubstitute && y.isSubstitute && (
+                    <label className="flex flex-col gap-2">
+                      <span className="text-sm font-medium text-gray-700">Συνολικές εβδομαδιαίες ώρες</span>
+                      <input 
+                        type="number" 
+                        min={0} 
+                        value={y.totalWeeklyHours} 
+                        onChange={(e) => {
+                          const newTotalHours = parseInt(e.target.value) || 0
+                          setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, totalWeeklyHours: newTotalHours } : it)))
+                        }} 
+                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </label>
+                  )}
+                  
+                  {supportsSubstitute && y.isSubstitute && (
+                    <label className="flex flex-col gap-2">
+                      <span className="text-sm font-medium text-gray-700">Μήνες ως Αναπληρωτής</span>
+                      <input 
+                        type="number" 
+                        min={0} 
+                        max={10} 
+                        value={y.substituteMonths} 
+                        onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, substituteMonths: parseInt(e.target.value) || 0 } : it)))} 
+                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </label>
+                  )}
+                </div>
                  
                  {/* Schools Section */}
                  <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4 space-y-4">
