@@ -64,7 +64,7 @@ export default function CalculatorPage() {
     }
   }, [flows, selectedFlowId])
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element
@@ -73,36 +73,55 @@ export default function CalculatorPage() {
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleKeyDown)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('keydown', handleKeyDown)
+      }
+    }
+  }, [isOpen])
 
   // Computed values
   const selectedFlow = useMemo(() => flows?.find((f) => f.id === selectedFlowId), [flows, selectedFlowId])
   const enabledKeys = useMemo(() => new Set<string>(selectedFlow?.flowCriteria?.map((fc) => fc.criterion.key) ?? []), [selectedFlow])
   const supportsSubstitute = useMemo(() => selectedFlow?.slug === 'metathesi' || selectedFlow?.slug === 'apospasi', [selectedFlow])
 
-  // Function to check if there are at least 2 consecutive years with MSD 10-14
+  // Function to check if there are at least 2 consecutive years with MSD 10-14 (for μόνιμος teachers only)
   const hasConsecutiveYearsWithHighMSD = (year: typeof yearsList[0]): boolean => {
     const currentYearIndex = yearsList.findIndex(y => y.id === year.id)
     if (currentYearIndex === -1) return false
+    
+    // Only apply to μόνιμος teachers
+    if (year.isSubstitute) return false
     
     // Check if current year has high MSD
     const currentYearHasHighMSD = year.placements.some(p => p.msd >= 10 && p.msd <= 14)
     if (!currentYearHasHighMSD) return false
     
-    // Check previous year
+    // Check previous year (must also be μόνιμος)
     if (currentYearIndex > 0) {
       const prevYear = yearsList[currentYearIndex - 1]
-      const prevYearHasHighMSD = prevYear.placements.some(p => p.msd >= 10 && p.msd <= 14)
-      if (prevYearHasHighMSD) return true
+      if (!prevYear.isSubstitute) { // Only check if previous year is also μόνιμος
+        const prevYearHasHighMSD = prevYear.placements.some(p => p.msd >= 10 && p.msd <= 14)
+        if (prevYearHasHighMSD) return true
+      }
     }
     
-    // Check next year
+    // Check next year (must also be μόνιμος)
     if (currentYearIndex < yearsList.length - 1) {
       const nextYear = yearsList[currentYearIndex + 1]
-      const nextYearHasHighMSD = nextYear.placements.some(p => p.msd >= 10 && p.msd <= 14)
-      if (nextYearHasHighMSD) return true
+      if (!nextYear.isSubstitute) { // Only check if next year is also μόνιμος
+        const nextYearHasHighMSD = nextYear.placements.some(p => p.msd >= 10 && p.msd <= 14)
+        if (nextYearHasHighMSD) return true
+      }
     }
     
     return false
@@ -326,7 +345,7 @@ export default function CalculatorPage() {
               </button>
               
               {isOpen && flows && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto dropdown-container">
                   {flows.map((f) => (
                     <button
                       key={f.id}
@@ -390,14 +409,14 @@ export default function CalculatorPage() {
               </label>
             )}
             {enabledKeys.has('children') && (
-              <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
+              <label className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
                 <span className="font-medium text-gray-900">Παιδιά:</span>
                 <input 
                   type="number" 
                   min={0} 
                   value={childrenCount} 
                   onChange={(e) => setChildrenCount(parseInt(e.target.value) || 0)} 
-                  className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="border border-gray-300 rounded-lg p-2 w-full sm:w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </label>
             )}
@@ -548,6 +567,7 @@ export default function CalculatorPage() {
                             if (pl.isPrison && extra) val += extra
                             
                             const schoolWeeklyHours = pl.weeklyHours || 0
+                            // For substitute teachers, no consecutive year requirement for MSD 10-14
                             const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
                             const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (y.substituteMonths / 12)
                             msdPoints += partition
@@ -600,7 +620,7 @@ export default function CalculatorPage() {
                       return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ`
                     })()})
                   </span>
-                  <div className="flex flex-wrap items-center gap-2 ml-auto">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 ml-auto">
                     <button
                       type="button"
                       onClick={() => {
@@ -688,8 +708,8 @@ export default function CalculatorPage() {
                   <div className="px-4 pb-4 border-t border-gray-100">
                 
                                 {/* Basic year info */}
-                <div className="flex flex-wrap items-end gap-4">
-                  <label className="flex flex-col gap-1 min-w-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <label className="flex flex-col gap-1">
                     <span className="text-sm font-medium text-gray-700">Έτος</span>
                     <input
                       type="number"
@@ -702,7 +722,7 @@ export default function CalculatorPage() {
                           setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, year: val } : it)))
                         }
                       }}
-                      className={`border rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20 ${
+                      className={`border rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full ${
                         yearsList.some((year, i) => i !== idx && year.year === y.year) 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-300'
@@ -711,13 +731,13 @@ export default function CalculatorPage() {
                   </label>
                   
                   {supportsSubstitute && (
-                    <label className="flex flex-col gap-1 min-w-0">
+                    <label className="flex flex-col gap-1">
                       <span className="text-sm font-medium text-gray-700">Κατάσταση</span>
                       <div className="flex bg-gray-200 rounded-lg p-1">
                         <button
                           type="button"
                           onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: false } : it)))}
-                          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          className={`flex-1 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                             !y.isSubstitute 
                               ? 'bg-white text-gray-900 shadow-sm' 
                               : 'text-gray-600 hover:text-gray-900'
@@ -739,7 +759,7 @@ export default function CalculatorPage() {
                               return it
                             }))
                           }}
-                          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          className={`flex-1 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                             y.isSubstitute 
                               ? 'bg-white text-gray-900 shadow-sm' 
                               : 'text-gray-600 hover:text-gray-900'
@@ -752,7 +772,7 @@ export default function CalculatorPage() {
                   )}
                   
                   {supportsSubstitute && y.isSubstitute && (
-                    <label className="flex flex-col gap-1 min-w-0">
+                    <label className="flex flex-col gap-1">
                       <span className="text-sm font-medium text-gray-700">Συνολικές ώρες</span>
                       <input 
                         type="number" 
@@ -762,13 +782,13 @@ export default function CalculatorPage() {
                           const newTotalHours = parseInt(e.target.value) || 0
                           setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, totalWeeklyHours: newTotalHours } : it)))
                         }} 
-                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-24"
+                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                       />
                     </label>
                   )}
                   
                   {supportsSubstitute && y.isSubstitute && (
-                    <label className="flex flex-col gap-1 min-w-0">
+                    <label className="flex flex-col gap-1">
                       <span className="text-sm font-medium text-gray-700">Μήνες</span>
                       <input 
                         type="number" 
@@ -776,7 +796,7 @@ export default function CalculatorPage() {
                         max={10} 
                         value={y.substituteMonths} 
                         onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, substituteMonths: parseInt(e.target.value) || 0 } : it)))} 
-                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20"
+                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                       />
                     </label>
                   )}
@@ -859,21 +879,21 @@ export default function CalculatorPage() {
                            />
                          </div>
                          
-                         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
                            {y.isSubstitute && (
-                             <label className="flex items-center gap-2 flex-shrink-0">
+                             <label className="flex flex-col gap-1">
                                <span className="text-sm font-medium text-gray-700">Ώρες/εβδ.</span>
                                <input 
                                  type="number" 
                                  min={0} 
                                  value={p.weeklyHours ?? 0} 
                                  onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, weeklyHours: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
-                                 className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                 className="border border-gray-300 rounded-lg p-2 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                                />
                              </label>
                            )}
                            
-                           <label className="flex items-center gap-2 flex-shrink-0">
+                           <label className="flex flex-col gap-1">
                              <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
                              <input 
                                type="number" 
@@ -881,7 +901,7 @@ export default function CalculatorPage() {
                                max={14} 
                                value={p.msd} 
                                onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
-                               className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               className="border border-gray-300 rounded-lg p-2 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                              />
                            </label>
                            
@@ -923,7 +943,7 @@ export default function CalculatorPage() {
                    {/* Weekly Hours Summary */}
                    {y.isSubstitute && (
                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                       <div className="flex justify-between items-center text-sm">
+                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-sm">
                          <span className="font-medium text-gray-700">Σύνολο ωρών σχολείων:</span>
                          <span className="font-bold text-gray-900">
                            {Math.round(y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0))} / {y.totalWeeklyHours}
@@ -971,6 +991,7 @@ export default function CalculatorPage() {
                     if (pl.isPrison && extra) val += extra
                     
                     const schoolWeeklyHours = pl.weeklyHours || 0
+                    // For substitute teachers, no consecutive year requirement for MSD 10-14
                     const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
                     const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (year.substituteMonths / 12)
                     totalMsdPoints += partition
