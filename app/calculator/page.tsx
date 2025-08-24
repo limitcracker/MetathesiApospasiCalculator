@@ -1027,23 +1027,22 @@ export default function CalculatorPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <h3 className="font-medium text-blue-900 mb-2">🚀 Προσεχείς λειτουργίες</h3>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Αποθήκευση σε cloud</li>
                   <li>• Εξαγωγή σε PDF</li>
-                  <li>• Ιστορικό υπολογισμών</li>
-                  <li>• Προηγμένα φίλτρα αναζήτησης</li>
-                  <li>• Mobile app</li>
+                  <li>• Αυτόματη αναζήτηση Σχολείου → ΜΣΔ</li>
                 </ul>
               </div>
               
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                 <h3 className="font-medium text-gray-900 mb-2">👨‍💻 Σχετικά με τον προγραμματιστή</h3>
                 <p className="text-sm text-gray-700">
-                  Αυτή η εφαρμογή αναπτύχθηκε για να βοηθήσει τους εκπαιδευτικούς 
+                  Αυτή η εφαρμογή αναπτύχθηκε από τον <a href="https://giftakis.gr" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Γυφτάκη Ιωάννη ΠΕ86</a> για να βοηθήσει τους εκπαιδευτικούς 
                   στον υπολογισμό των μορίων για μεταθέσεις και αποσπάσεις.
                 </p>
                 <p className="text-sm text-gray-600 mt-2">
                   Εκδόσεις: v1.1<br/>
-                  Τεχνολογίες: Next.js, React, TypeScript
+                  <a href="https://github.com/limitcracker/MetathesiApospasiCalculator" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">
+                    Github repo 🔗
+                  </a>
                 </p>
               </div>
             </div>
