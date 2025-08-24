@@ -918,6 +918,93 @@ export default function CalculatorPage() {
         <div className="text-2xl font-bold">Σύνολο Μορίων</div>
         <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
         <div className="text-blue-100 text-sm mt-1">μόρια</div>
+        <div className="text-blue-100 text-sm mt-2">
+          {(() => {
+            // Calculate total MSD points
+            let totalMsdPoints = 0
+            for (const year of yearsList) {
+              if (!selectedFlow) continue
+              const configByKey = new Map<string, unknown>()
+              for (const fc of selectedFlow.flowCriteria) {
+                configByKey.set(fc.criterion.key, fc.config)
+              }
+              const getCfg = (k: string): unknown => configByKey.get(k)
+              
+              const dys = getCfg('dysprosita')
+              const pris = getCfg('prisons')
+              const msd = getCfg('msd')
+              if (msd) {
+                if (supportsSubstitute && year.isSubstitute) {
+                  const totalWeeklyHours = year.totalWeeklyHours
+                  for (const pl of year.placements) {
+                    let val = pl.msd
+                    const threshold = readNumber(dys, 'threshold') || 10
+                    const isDys = pl.msd >= threshold
+                    if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+                    const extra = readNumber(pris, 'extraMsd')
+                    if (pl.isPrison && extra) val += extra
+                    
+                    const schoolWeeklyHours = pl.weeklyHours || 0
+                    const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
+                    const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (year.substituteMonths / 12)
+                    totalMsdPoints += partition
+                  }
+                } else {
+                  for (const pl of year.placements) {
+                    let val = pl.msd
+                    const threshold = readNumber(dys, 'threshold') || 10
+                    const isDys = pl.msd >= threshold
+                    if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+                    const extra = readNumber(pris, 'extraMsd')
+                    if (pl.isPrison && extra) val += extra
+                    
+                    const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(year)
+                    const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14 && hasConsecutiveHighMSD) ? 2 : 1
+                    const monthsFactor = pl.months / 12
+                    totalMsdPoints += val * msdMultiplier * monthsFactor
+                  }
+                }
+              }
+            }
+            
+                         // Calculate total duration points
+             let totalDurationPoints = 0
+             if (flows && selectedFlowId !== flows.find(f => f.slug === 'neodioristos')?.id && selectedFlow) {
+              let totalMonths = 0
+              for (const year of yearsList) {
+                if (supportsSubstitute && year.isSubstitute) {
+                  totalMonths += year.substituteMonths
+                } else {
+                  totalMonths += year.placements.reduce((sum, p) => sum + p.months, 0)
+                }
+              }
+              
+              const totalYears = totalMonths / 12
+              
+              if (selectedFlow && selectedFlow.slug === 'metathesi') {
+                totalDurationPoints = totalYears * 2.5
+              } else if (selectedFlow && selectedFlow.slug === 'apospasi') {
+                if (totalYears <= 10) {
+                  totalDurationPoints = totalYears * 1
+                } else if (totalYears <= 20) {
+                  totalDurationPoints = totalYears * 1.5
+                } else {
+                  totalDurationPoints = totalYears * 2
+                }
+              } else {
+                const configByKey = new Map<string, unknown>()
+                for (const fc of selectedFlow.flowCriteria) {
+                  configByKey.set(fc.criterion.key, fc.config)
+                }
+                const getCfg = (k: string): unknown => configByKey.get(k)
+                const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
+                totalDurationPoints = perYearBase * totalYears
+              }
+            }
+            
+            return `= ${totalMsdPoints.toFixed(2)} ΜΣΔ + ${totalDurationPoints.toFixed(2)} ΠΡΟΫΠ`
+          })()}
+        </div>
       </div>
 
       {/* Upcoming Features Modal */}
