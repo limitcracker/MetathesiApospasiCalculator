@@ -895,7 +895,7 @@ export default function CalculatorPage() {
                          <button 
                            type="button" 
                            className={`px-3 py-2 text-sm border rounded-lg transition-colors font-medium ${
-                             y.placements.length <= 1 
+                             y.placements.length === 1 
                                ? 'border-gray-300 text-gray-400 cursor-not-allowed' 
                                : 'border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400'
                            }`}
@@ -907,8 +907,8 @@ export default function CalculatorPage() {
                                } : it)))
                              }
                            }}
-                           disabled={y.placements.length <= 1}
-                           title={y.placements.length <= 1 ? "Απαιτείται τουλάχιστον ένα σχολείο" : "Διαγραφή σχολείου"}
+                           disabled={y.placements.length === 1}
+                           title={y.placements.length === 1 ? "Απαιτείται τουλάχιστον ένα σχολείο" : "Διαγραφή σχολείου"}
                          >
                            Διαγραφή
                          </button>
