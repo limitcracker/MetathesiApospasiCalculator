@@ -55,6 +55,7 @@ export default function CalculatorPage() {
   const [hasStudies, setHasStudies] = useState(false)
   const [hasIvf, setHasIvf] = useState(false)
   const [hasFirstPreference, setHasFirstPreference] = useState(false)
+  const [expandedYearId, setExpandedYearId] = useState<string | null>(null)
 
   useEffect(() => {
     if (flows && flows.length && !selectedFlowId) {
@@ -498,8 +499,8 @@ export default function CalculatorPage() {
           
           <div className="space-y-2">
             {yearsList.map((y, idx) => (
-              <div key={y.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-                <div className="flex items-center gap-4 mb-4">
+              <div key={y.id} className="border border-gray-200 rounded-lg bg-white shadow-sm">
+                <div className="flex items-center gap-4 p-4">
                   <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{idx + 1}</span>
                   <span className="font-medium text-gray-900">Έτος {y.year}</span>
                   <span className="text-sm text-gray-600">({computeYearPoints(y).toFixed(2)} μόρια)</span>
@@ -510,7 +511,24 @@ export default function CalculatorPage() {
                   >
                     Διαγραφή
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedYearId(expandedYearId === y.id ? null : y.id)}
+                    className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <svg 
+                      className={`w-5 h-5 transition-transform ${expandedYearId === y.id ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                 </div>
+                
+                {expandedYearId === y.id && (
+                  <div className="px-4 pb-4 border-t border-gray-100">
                 
                                 {/* Basic year info */}
                 <div className="flex flex-wrap items-end gap-4">
@@ -725,8 +743,10 @@ export default function CalculatorPage() {
                      </div>
                    )}
                  </div>
-               </div>
-             ))}
+                  </div>
+                )}
+              </div>
+            ))}
            </div>
          </section>
        )}
