@@ -33,6 +33,12 @@ export default function CalculatorPage() {
     }
   }, [flows, selectedFlowId])
 
+  // Debug logging
+  console.log('Flows data:', flows)
+  console.log('Selected flow ID:', selectedFlowId)
+  console.log('Is loading:', isLoading)
+  console.log('Error:', error)
+
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
       <div className="text-center space-y-4">
@@ -59,6 +65,16 @@ export default function CalculatorPage() {
               ))}
             </select>
           </label>
+        </div>
+        
+        {/* Debug info */}
+        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+          <div><strong>Debug Info:</strong></div>
+          <div>Loading: {isLoading ? 'Yes' : 'No'}</div>
+          <div>Error: {error ? 'Yes' : 'No'}</div>
+          <div>Flows count: {flows?.length || 0}</div>
+          <div>Selected ID: {selectedFlowId}</div>
+          <div>Available flows: {flows?.map(f => f.name).join(', ') || 'None'}</div>
         </div>
       </div>
 
