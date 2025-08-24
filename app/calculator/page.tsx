@@ -56,6 +56,7 @@ export default function CalculatorPage() {
   const [hasIvf, setHasIvf] = useState(false)
   const [hasFirstPreference, setHasFirstPreference] = useState(false)
   const [expandedYearId, setExpandedYearId] = useState<string | null>(null)
+  const [showUpcomingModal, setShowUpcomingModal] = useState(false)
 
   useEffect(() => {
     if (flows && flows.length && !selectedFlowId) {
@@ -289,10 +290,19 @@ export default function CalculatorPage() {
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
-        <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
-      </div>
+                        <div className="text-center space-y-4 relative">
+                    <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
+                    <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
+                    <button
+                      onClick={() => setShowUpcomingModal(true)}
+                      className="absolute top-0 right-0 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      title="Προσεχείς λειτουργίες & Σχετικά με τον προγραμματιστή"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                  </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -909,6 +919,59 @@ export default function CalculatorPage() {
         <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
         <div className="text-blue-100 text-sm mt-1">μόρια</div>
       </div>
+
+      {/* Upcoming Features Modal */}
+      {showUpcomingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">Προσεχείς λειτουργίες</h2>
+              <button
+                onClick={() => setShowUpcomingModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <h3 className="font-medium text-blue-900 mb-2">🚀 Προσεχείς λειτουργίες</h3>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Αποθήκευση σε cloud</li>
+                  <li>• Εξαγωγή σε PDF</li>
+                  <li>• Ιστορικό υπολογισμών</li>
+                  <li>• Προηγμένα φίλτρα αναζήτησης</li>
+                  <li>• Mobile app</li>
+                </ul>
+              </div>
+              
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <h3 className="font-medium text-gray-900 mb-2">👨‍💻 Σχετικά με τον προγραμματιστή</h3>
+                <p className="text-sm text-gray-700">
+                  Αυτή η εφαρμογή αναπτύχθηκε για να βοηθήσει τους εκπαιδευτικούς 
+                  στον υπολογισμό των μορίων για μεταθέσεις και αποσπάσεις.
+                </p>
+                <p className="text-sm text-gray-600 mt-2">
+                  Εκδόσεις: v1.1<br/>
+                  Τεχνολογίες: Next.js, React, TypeScript
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowUpcomingModal(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Κλείσιμο
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
