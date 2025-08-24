@@ -482,9 +482,16 @@ export default function CalculatorPage() {
               className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
                                      onClick={() => {
                          const nextId = Math.random().toString(36).slice(2)
+                         let nextYear = (yearsList[yearsList.length - 1]?.year || new Date().getFullYear()) + 1
+                         
+                         // Find the next available year
+                         while (yearsList.some(y => y.year === nextYear)) {
+                           nextYear++
+                         }
+                         
                          const next = {
                            id: nextId,
-                           year: (yearsList[yearsList.length - 1]?.year || new Date().getFullYear()) + 1,
+                           year: nextYear,
                            isSubstitute: false, // Default to Μόνιμος
                            totalWeeklyHours: 23,
                            substituteMonths: 10,
@@ -581,27 +588,88 @@ export default function CalculatorPage() {
                       return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ`
                     })()})
                   </span>
-                  <button
-                    type="button"
-                    className="px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium ml-auto"
-                    onClick={() => setYearsList((arr) => arr.filter((_, i) => i !== idx))}
-                  >
-                    Διαγραφή
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setExpandedYearId(expandedYearId === y.id ? null : y.id)}
-                    className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <svg 
-                      className={`w-5 h-5 transition-transform ${expandedYearId === y.id ? 'rotate-180' : ''}`} 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
+                  <div className="flex items-center gap-2 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newYear = {
+                          ...y,
+                          id: Math.random().toString(36).slice(2),
+                          year: y.year + 1,
+                          placements: y.placements.map(p => ({ ...p, schoolName: '' }))
+                        }
+                        setYearsList((arr) => {
+                          const newArr = [...arr]
+                          newArr.splice(idx + 1, 0, newYear)
+                          return newArr
+                        })
+                        setExpandedYearId(newYear.id)
+                      }}
+                      className="px-2 py-1 text-xs border border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-colors font-medium"
+                      title="Διπλασιασμός έτους"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                      Διπλ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (idx > 0) {
+                          setYearsList((arr) => {
+                            const newArr = [...arr]
+                            const temp = newArr[idx]
+                            newArr[idx] = newArr[idx - 1]
+                            newArr[idx - 1] = temp
+                            return newArr
+                          })
+                        }
+                      }}
+                      disabled={idx === 0}
+                      className="px-2 py-1 text-xs border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Μετακίνηση πάνω"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (idx < yearsList.length - 1) {
+                          setYearsList((arr) => {
+                            const newArr = [...arr]
+                            const temp = newArr[idx]
+                            newArr[idx] = newArr[idx + 1]
+                            newArr[idx + 1] = temp
+                            return newArr
+                          })
+                        }
+                      }}
+                      disabled={idx === yearsList.length - 1}
+                      className="px-2 py-1 text-xs border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Μετακίνηση κάτω"
+                    >
+                      ↓
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium"
+                      onClick={() => setYearsList((arr) => arr.filter((_, i) => i !== idx))}
+                    >
+                      Διαγραφή
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedYearId(expandedYearId === y.id ? null : y.id)}
+                      className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <svg 
+                        className={`w-5 h-5 transition-transform ${expandedYearId === y.id ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 
                 {expandedYearId === y.id && (
@@ -616,9 +684,17 @@ export default function CalculatorPage() {
                       value={y.year}
                       onChange={(e) => {
                         const val = parseInt(e.target.value) || 0
-                        setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, year: val } : it)))
+                        // Check if year already exists
+                        const yearExists = yearsList.some((year, i) => i !== idx && year.year === val)
+                        if (!yearExists) {
+                          setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, year: val } : it)))
+                        }
                       }}
-                      className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20"
+                      className={`border rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20 ${
+                        yearsList.some((year, i) => i !== idx && year.year === y.year) 
+                          ? 'border-red-300 bg-red-50' 
+                          : 'border-gray-300'
+                      }`}
                     />
                   </label>
                   
@@ -750,7 +826,7 @@ export default function CalculatorPage() {
                          <div className="flex items-center gap-3 min-w-0 flex-1">
                            <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold flex-shrink-0">#{pIdx + 1}</span>
                            <input 
-                             className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0" 
+                             className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0 text-gray-900" 
                              placeholder="Όνομα σχολείου" 
                              value={p.schoolName} 
                              onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, schoolName: e.target.value } : pp)) } : it)))} 
