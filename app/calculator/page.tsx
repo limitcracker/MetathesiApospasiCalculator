@@ -43,7 +43,7 @@ export default function CalculatorPage() {
       isSubstitute: false, // Default to Μόνιμος
       totalWeeklyHours: 23,
       substituteMonths: 10,
-      placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }],
+      placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }], // Will be updated when isSubstitute changes
     },
   ])
   
@@ -465,7 +465,7 @@ export default function CalculatorPage() {
                            isSubstitute: false, // Default to Μόνιμος
                            totalWeeklyHours: 23,
                            substituteMonths: 10,
-                           placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }],
+                           placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }], // Will be updated when isSubstitute changes
                          }
                          setYearsList((arr) => [...arr, next])
                        }}
@@ -521,7 +521,18 @@ export default function CalculatorPage() {
                          </button>
                          <button
                            type="button"
-                           onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: true } : it)))}
+                           onClick={() => {
+                             setYearsList((arr) => arr.map((it, i) => {
+                               if (i === idx) {
+                                 // When switching to substitute, set the first school's weekly hours to total hours
+                                 const updatedPlacements = it.placements.map((p, pIdx) => 
+                                   pIdx === 0 ? { ...p, weeklyHours: it.totalWeeklyHours } : p
+                                 )
+                                 return { ...it, isSubstitute: true, placements: updatedPlacements }
+                               }
+                               return it
+                             }))
+                           }}
                            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                              y.isSubstitute 
                                ? 'bg-white text-gray-900 shadow-sm' 
@@ -571,6 +582,10 @@ export default function CalculatorPage() {
                      <button
                        type="button"
                        onClick={() => {
+                         // Calculate remaining weekly hours for this year
+                         const usedHours = y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
+                         const remainingHours = y.totalWeeklyHours - usedHours
+                         
                          setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
                            ...it, 
                            placements: [...it.placements, { 
@@ -578,7 +593,7 @@ export default function CalculatorPage() {
                              months: 12, 
                              msd: 1, 
                              isPrison: false, 
-                             weeklyHours: y.isSubstitute ? Math.floor(y.totalWeeklyHours / (it.placements.length + 1)) : 0 
+                             weeklyHours: y.isSubstitute ? (y.placements.length === 0 ? y.totalWeeklyHours : Math.max(0, remainingHours)) : 0 
                            }] 
                          } : it)))
                        }}
