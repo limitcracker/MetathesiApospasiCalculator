@@ -480,18 +480,19 @@ export default function CalculatorPage() {
                 <div className="flex items-center gap-4 mb-4">
                   <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{idx + 1}</span>
                   <span className="font-medium text-gray-900">Έτος {y.year}</span>
+                  <span className="text-sm text-gray-600">({computeYearPoints(y).toFixed(2)} μόρια)</span>
                   <button
                     type="button"
-                    className="px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium"
+                    className="px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium ml-auto"
                     onClick={() => setYearsList((arr) => arr.filter((_, i) => i !== idx))}
                   >
                     Διαγραφή
                   </button>
                 </div>
                 
-                {/* Basic year info */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <label className="flex flex-col gap-2">
+                                {/* Basic year info */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                  <label className="flex flex-col gap-1">
                     <span className="text-sm font-medium text-gray-700">Έτος</span>
                     <input
                       type="number"
@@ -500,18 +501,18 @@ export default function CalculatorPage() {
                         const val = parseInt(e.target.value) || 0
                         setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, year: val } : it)))
                       }}
-                      className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20"
+                      className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-16"
                     />
                   </label>
                   
                   {supportsSubstitute && (
-                    <label className="flex flex-col gap-2">
+                    <label className="flex flex-col gap-1">
                       <span className="text-sm font-medium text-gray-700">Κατάσταση</span>
                       <div className="flex bg-gray-200 rounded-lg p-1">
                         <button
                           type="button"
                           onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: false } : it)))}
-                          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                             !y.isSubstitute 
                               ? 'bg-white text-gray-900 shadow-sm' 
                               : 'text-gray-600 hover:text-gray-900'
@@ -533,7 +534,7 @@ export default function CalculatorPage() {
                               return it
                             }))
                           }}
-                          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                             y.isSubstitute 
                               ? 'bg-white text-gray-900 shadow-sm' 
                               : 'text-gray-600 hover:text-gray-900'
@@ -546,8 +547,8 @@ export default function CalculatorPage() {
                   )}
                   
                   {supportsSubstitute && y.isSubstitute && (
-                    <label className="flex flex-col gap-2">
-                      <span className="text-sm font-medium text-gray-700">Συνολικές εβδομαδιαίες ώρες</span>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-sm font-medium text-gray-700">Συνολικές ώρες</span>
                       <input 
                         type="number" 
                         min={0} 
@@ -556,34 +557,25 @@ export default function CalculatorPage() {
                           const newTotalHours = parseInt(e.target.value) || 0
                           setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, totalWeeklyHours: newTotalHours } : it)))
                         }} 
-                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20"
                       />
                     </label>
                   )}
                   
                   {supportsSubstitute && y.isSubstitute && (
-                    <label className="flex flex-col gap-2">
-                      <span className="text-sm font-medium text-gray-700">Μήνες ως Αναπληρωτής</span>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-sm font-medium text-gray-700">Μήνες</span>
                       <input 
                         type="number" 
                         min={0} 
                         max={10} 
                         value={y.substituteMonths} 
                         onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, substituteMonths: parseInt(e.target.value) || 0 } : it)))} 
-                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-16"
                       />
                     </label>
                   )}
-                                 </div>
-                 
-                 {/* Year Points Display */}
-                 <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                   <div className="text-center">
-                     <div className="text-lg font-semibold text-blue-900">Μόρια για το έτος {y.year}</div>
-                     <div className="text-2xl font-bold text-blue-700 mt-1">{computeYearPoints(y).toFixed(2)}</div>
-                     <div className="text-sm text-blue-600">μόρια</div>
-                   </div>
-                 </div>
+                </div>
                  
                  {/* Schools Section */}
                  <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4 space-y-4">
