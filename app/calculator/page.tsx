@@ -188,8 +188,6 @@ export default function CalculatorPage() {
   //   }))
   // } // Unused function
 
-
-
   // Calculate total by summing individual year MSD points plus one-time criteria and προϋπηρεσία
   const total = yearsList.reduce((sum, year) => sum + computeYearPoints(year), 0) + 
     // Add one-time criteria points
