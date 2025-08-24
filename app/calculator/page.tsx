@@ -26,12 +26,26 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json())
 export default function CalculatorPage() {
   const { data: flows, error, isLoading } = useSWR<FlowSummary[]>("/api/flows", fetcher)
   const [selectedFlowId, setSelectedFlowId] = useState<string>('')
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     if (flows && flows.length && !selectedFlowId) {
       setSelectedFlowId(flows[0].id)
     }
   }, [flows, selectedFlowId])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (!target.closest('.dropdown-container')) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Debug logging
   console.log('Flows data:', flows)
@@ -50,20 +64,41 @@ export default function CalculatorPage() {
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <label className="flex flex-col gap-2 flex-1">
             <span className="text-sm font-semibold text-blue-900">Επιλογή Ροής</span>
-            <select 
-              id="flow-select"
-              name="flow-select"
-              value={selectedFlowId} 
-              onChange={(e) => setSelectedFlowId(e.target.value)} 
-              disabled={isLoading}
-              className="border border-blue-300 rounded-lg p-3 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50"
-            >
-              {isLoading && <option>Φόρτωση...</option>}
-              {error && <option>Σφάλμα φόρτωσης</option>}
-              {flows?.map((f) => (
-                <option key={f.id} value={f.id}>{f.name}</option>
-              ))}
-            </select>
+            <div className="relative dropdown-container">
+              <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                disabled={isLoading}
+                className="w-full border border-blue-300 rounded-lg p-3 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 text-left flex justify-between items-center"
+              >
+                <span>
+                  {isLoading ? 'Φόρτωση...' : 
+                   error ? 'Σφάλμα φόρτωσης' :
+                   flows?.find(f => f.id === selectedFlowId)?.name || 'Επιλέξτε ροή'}
+                </span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {isOpen && flows && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                  {flows.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedFlowId(f.id)
+                        setIsOpen(false)
+                      }}
+                      className="w-full px-3 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none"
+                    >
+                      {f.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </label>
         </div>
         
