@@ -40,7 +40,7 @@ export default function CalculatorPage() {
     {
       id: 'y0',
       year: new Date().getFullYear(),
-      isSubstitute: false,
+      isSubstitute: false, // Default to Μόνιμος
       totalWeeklyHours: 23,
       substituteMonths: 10,
       placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }],
@@ -79,6 +79,149 @@ export default function CalculatorPage() {
   const selectedFlow = useMemo(() => flows?.find((f) => f.id === selectedFlowId), [flows, selectedFlowId])
   const enabledKeys = useMemo(() => new Set<string>(selectedFlow?.flowCriteria?.map((fc) => fc.criterion.key) ?? []), [selectedFlow])
   const supportsSubstitute = useMemo(() => selectedFlow?.slug === 'metathesi' || selectedFlow?.slug === 'apospasi', [selectedFlow])
+
+  // Function to check if there are at least 2 consecutive years with MSD 10-14
+  const hasConsecutiveYearsWithHighMSD = (year: typeof yearsList[0]): boolean => {
+    const currentYearIndex = yearsList.findIndex(y => y.id === year.id)
+    if (currentYearIndex === -1) return false
+    
+    // Check if current year has high MSD
+    const currentYearHasHighMSD = year.placements.some(p => p.msd >= 10 && p.msd <= 14)
+    if (!currentYearHasHighMSD) return false
+    
+    // Check previous year
+    if (currentYearIndex > 0) {
+      const prevYear = yearsList[currentYearIndex - 1]
+      const prevYearHasHighMSD = prevYear.placements.some(p => p.msd >= 10 && p.msd <= 14)
+      if (prevYearHasHighMSD) return true
+    }
+    
+    // Check next year
+    if (currentYearIndex < yearsList.length - 1) {
+      const nextYear = yearsList[currentYearIndex + 1]
+      const nextYearHasHighMSD = nextYear.placements.some(p => p.msd >= 10 && p.msd <= 14)
+      if (nextYearHasHighMSD) return true
+    }
+    
+    return false
+  }
+
+  // Function to calculate points for a single year
+  const computeYearPoints = (year: typeof yearsList[0]): number => {
+    if (!selectedFlow) return 0
+    const configByKey = new Map<string, unknown>()
+    for (const fc of selectedFlow.flowCriteria) {
+      configByKey.set(fc.criterion.key, fc.config)
+    }
+    let points = 0
+    const getCfg = (k: string): unknown => configByKey.get(k)
+    
+    // Calculate MSD points for this year only
+    const dys = getCfg('dysprosita')
+    const pris = getCfg('prisons')
+    const msd = getCfg('msd')
+    if (msd) {
+      if (supportsSubstitute && year.isSubstitute) {
+        // For substitute teachers, calculate partition based on weekly hours
+        const totalWeeklyHours = year.totalWeeklyHours
+        for (const pl of year.placements) {
+          let val = pl.msd
+          const threshold = readNumber(dys, 'threshold') || 10
+          const isDys = pl.msd >= threshold
+          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+          const extra = readNumber(pris, 'extraMsd')
+          if (pl.isPrison && extra) val += extra
+          
+          // Calculate partition: (school weekly hours / total weekly hours) * MSD * substitute months / 12
+          const schoolWeeklyHours = pl.weeklyHours || 0
+          // Double MSD points if MSD is 10-14 (for substitute teachers, no consecutive year requirement)
+          const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
+          const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (year.substituteMonths / 12)
+          points += partition
+        }
+      } else {
+        // For regular teachers, use the original calculation
+        for (const pl of year.placements) {
+          let val = pl.msd
+          const threshold = readNumber(dys, 'threshold') || 10
+          const isDys = pl.msd >= threshold
+          if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+          const extra = readNumber(pris, 'extraMsd')
+          if (pl.isPrison && extra) val += extra
+          // Check if there are at least 2 consecutive years with MSD 10-14
+          const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(year)
+          
+          // Double MSD points if MSD is 10-14 AND at least 2 consecutive years with high MSD
+          const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14 && hasConsecutiveHighMSD) ? 2 : 1
+          const monthsFactor = pl.months / 12
+          points += val * msdMultiplier * monthsFactor
+        }
+      }
+    }
+    
+    return points
+  }
+
+  // Calculate total points
+  const total = yearsList.reduce((sum, year) => sum + computeYearPoints(year), 0) + 
+    // Add one-time criteria points
+    (() => {
+      if (!selectedFlow) return 0
+      const configByKey = new Map<string, unknown>()
+      for (const fc of selectedFlow.flowCriteria) {
+        configByKey.set(fc.criterion.key, fc.config)
+      }
+      let points = 0
+      const getCfg = (k: string): unknown => configByKey.get(k)
+      if (hasMarriage) points += readNumber(getCfg('marriage'), 'points')
+      for (let i = 1; i <= childrenCount; i++) {
+        const c = getCfg('children')
+        points += i === 1 ? readNumber(c, 'first') : i === 2 ? readNumber(c, 'second') : i === 3 ? readNumber(c, 'third') : readNumber(c, 'fourthPlus')
+      }
+      if (hasSynypiretisi) points += readNumber(getCfg('synypiretisi'), 'points')
+      if (hasEntopiotita) points += readNumber(getCfg('entopiotita'), 'points')
+      if (hasStudies) points += readNumber(getCfg('studies'), 'points')
+      if (hasIvf) points += readNumber(getCfg('ivf'), 'points')
+      if (hasFirstPreference) points += readNumber(getCfg('firstPreference'), 'points')
+      
+      // Add προϋπηρεσία points (calculated once for total experience)
+      if (flows && selectedFlowId !== flows.find(f => f.slug === 'neodioristos')?.id) {
+        let totalMonths = 0
+        for (const year of yearsList) {
+          if (supportsSubstitute && year.isSubstitute) {
+            totalMonths += year.substituteMonths
+          } else {
+            totalMonths += year.placements.reduce((sum, p) => sum + p.months, 0)
+          }
+        }
+        
+        const totalYears = totalMonths / 12
+        
+        // Apply flow-specific calculation based on flow type
+        if (selectedFlow?.slug === 'metathesi') {
+          // Ροή 2: total working months / 12 * 2.5
+          points += totalYears * 2.5
+        } else if (selectedFlow?.slug === 'apospasi') {
+          // Ροή 3: different multipliers based on years
+          if (totalYears <= 10) {
+            // Years 1-10: multiplier = 1
+            points += totalYears * 1
+          } else if (totalYears <= 20) {
+            // Years 11-20: multiplier = 1.5
+            points += totalYears * 1.5
+          } else {
+            // Years 20+: multiplier = 2
+            points += totalYears * 2
+          }
+        } else {
+          // Default calculation for other flows
+          const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
+          points += perYearBase * totalYears
+        }
+      }
+      
+      return points
+    })()
 
   // Export functionality
   const exportData = () => {
@@ -314,18 +457,18 @@ export default function CalculatorPage() {
             <button
               type="button"
               className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
-              onClick={() => {
-                const nextId = Math.random().toString(36).slice(2)
-                const next = {
-                  id: nextId,
-                  year: (yearsList[yearsList.length - 1]?.year || new Date().getFullYear()) + 1,
-                  isSubstitute: false,
-                  totalWeeklyHours: 23,
-                  substituteMonths: 10,
-                  placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }],
-                }
-                setYearsList((arr) => [...arr, next])
-              }}
+                                     onClick={() => {
+                         const nextId = Math.random().toString(36).slice(2)
+                         const next = {
+                           id: nextId,
+                           year: (yearsList[yearsList.length - 1]?.year || new Date().getFullYear()) + 1,
+                           isSubstitute: false, // Default to Μόνιμος
+                           totalWeeklyHours: 23,
+                           substituteMonths: 10,
+                           placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }],
+                         }
+                         setYearsList((arr) => [...arr, next])
+                       }}
             >
               + Προσθήκη έτους
             </button>
@@ -517,7 +660,7 @@ export default function CalculatorPage() {
 
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
         <div className="text-2xl font-bold">Σύνολο Μορίων</div>
-        <div className="text-4xl font-bold mt-2">0.00</div>
+        <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
         <div className="text-blue-100 text-sm mt-1">μόρια</div>
       </div>
     </main>
