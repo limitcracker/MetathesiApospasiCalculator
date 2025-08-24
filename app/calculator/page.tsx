@@ -504,7 +504,7 @@ export default function CalculatorPage() {
                   <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{idx + 1}</span>
                   <span className="font-medium text-gray-900">Έτος {y.year}</span>
                   <span className="text-sm text-gray-600">
-                    ({computeYearPoints(y).toFixed(2)} μόρια: {(() => {
+                    ({computeYearPoints(y).toFixed(2)} μόρια = {(() => {
                       // Calculate MSD points only
                       if (!selectedFlow) return '0.00'
                       const configByKey = new Map<string, unknown>()
@@ -578,7 +578,7 @@ export default function CalculatorPage() {
                         }
                       }
                       
-                      return `${msdPoints.toFixed(2)} + ${durationPoints.toFixed(2)}`
+                      return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ`
                     })()})
                   </span>
                   <button
