@@ -505,7 +505,7 @@ export default function CalculatorPage() {
                            isSubstitute: false, // Default to Μόνιμος
                            totalWeeklyHours: 23,
                            substituteMonths: 10,
-                           placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }], // Will be updated when isSubstitute changes
+                           placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }], // Always has at least one school
                          }
                          setYearsList((arr) => [...arr, next])
                        }}
@@ -808,8 +808,22 @@ export default function CalculatorPage() {
                      </button>
                    </div>
                    
+                   {/* No Schools Warning */}
+                   {y.placements.length === 0 && (
+                     <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                       <div className="flex items-center gap-2">
+                         <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                         </svg>
+                         <span className="text-sm font-medium text-red-800">
+                           Προσοχή: Απαιτείται τουλάχιστον ένα σχολείο για τον υπολογισμό των ΜΣΔ μορίων
+                         </span>
+                       </div>
+                     </div>
+                   )}
+                   
                    {/* Weekly Hours Validation Warning */}
-                   {y.isSubstitute && (() => {
+                   {y.isSubstitute && y.placements.length > 0 && (() => {
                      const totalSchoolHours = y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
                      const difference = y.totalWeeklyHours - totalSchoolHours
                      if (Math.abs(difference) > 0.1) {
@@ -880,13 +894,21 @@ export default function CalculatorPage() {
                          
                          <button 
                            type="button" 
-                           className="px-3 py-2 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium" 
+                           className={`px-3 py-2 text-sm border rounded-lg transition-colors font-medium ${
+                             y.placements.length <= 1 
+                               ? 'border-gray-300 text-gray-400 cursor-not-allowed' 
+                               : 'border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400'
+                           }`}
                            onClick={() => {
-                             setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
-                               ...it, 
-                               placements: it.placements.filter((_, j) => j !== pIdx) 
-                             } : it)))
+                             if (y.placements.length > 1) {
+                               setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                 ...it, 
+                                 placements: it.placements.filter((_, j) => j !== pIdx) 
+                               } : it)))
+                             }
                            }}
+                           disabled={y.placements.length <= 1}
+                           title={y.placements.length <= 1 ? "Απαιτείται τουλάχιστον ένα σχολείο" : "Διαγραφή σχολείου"}
                          >
                            Διαγραφή
                          </button>
