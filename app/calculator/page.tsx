@@ -1086,7 +1086,7 @@ export default function CalculatorPage() {
                      </div>
                    </div>
                  </div>
-               </div>
+               </div> 
                
                                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200">
                   <div className="text-xs text-gray-500">
