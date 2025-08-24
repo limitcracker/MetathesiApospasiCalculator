@@ -453,7 +453,29 @@ export default function CalculatorPage() {
       {selectedFlow && selectedFlow.slug !== 'neodioristos' && (
         <section className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Έτη Εργασίας</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold text-gray-900">Έτη Εργασίας</h2>
+              {(() => {
+                let totalMonths = 0
+                for (const year of yearsList) {
+                  if (supportsSubstitute && year.isSubstitute) {
+                    totalMonths += year.substituteMonths
+                  } else {
+                    totalMonths += year.placements.reduce((sum, p) => sum + p.months, 0)
+                  }
+                }
+                const totalYears = Math.floor(totalMonths / 12)
+                const remainingMonths = totalMonths % 12
+                return (
+                  <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                    {totalYears > 0 && `${totalYears} έτη`}
+                    {totalYears > 0 && remainingMonths > 0 && ' '}
+                    {remainingMonths > 0 && `${remainingMonths} μήνες`}
+                    {totalYears === 0 && remainingMonths === 0 && '0 μήνες'}
+                  </span>
+                )
+              })()}
+            </div>
             <button
               type="button"
               className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
@@ -491,8 +513,8 @@ export default function CalculatorPage() {
                 </div>
                 
                                 {/* Basic year info */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                  <label className="flex flex-col gap-1">
+                <div className="flex flex-wrap items-end gap-4">
+                  <label className="flex flex-col gap-1 min-w-0">
                     <span className="text-sm font-medium text-gray-700">Έτος</span>
                     <input
                       type="number"
@@ -501,18 +523,18 @@ export default function CalculatorPage() {
                         const val = parseInt(e.target.value) || 0
                         setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, year: val } : it)))
                       }}
-                      className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-16"
+                      className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20"
                     />
                   </label>
                   
                   {supportsSubstitute && (
-                    <label className="flex flex-col gap-1">
+                    <label className="flex flex-col gap-1 min-w-0">
                       <span className="text-sm font-medium text-gray-700">Κατάσταση</span>
                       <div className="flex bg-gray-200 rounded-lg p-1">
                         <button
                           type="button"
                           onClick={() => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, isSubstitute: false } : it)))}
-                          className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                             !y.isSubstitute 
                               ? 'bg-white text-gray-900 shadow-sm' 
                               : 'text-gray-600 hover:text-gray-900'
@@ -534,7 +556,7 @@ export default function CalculatorPage() {
                               return it
                             }))
                           }}
-                          className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                             y.isSubstitute 
                               ? 'bg-white text-gray-900 shadow-sm' 
                               : 'text-gray-600 hover:text-gray-900'
@@ -547,7 +569,7 @@ export default function CalculatorPage() {
                   )}
                   
                   {supportsSubstitute && y.isSubstitute && (
-                    <label className="flex flex-col gap-1">
+                    <label className="flex flex-col gap-1 min-w-0">
                       <span className="text-sm font-medium text-gray-700">Συνολικές ώρες</span>
                       <input 
                         type="number" 
@@ -557,13 +579,13 @@ export default function CalculatorPage() {
                           const newTotalHours = parseInt(e.target.value) || 0
                           setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, totalWeeklyHours: newTotalHours } : it)))
                         }} 
-                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20"
+                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-24"
                       />
                     </label>
                   )}
                   
                   {supportsSubstitute && y.isSubstitute && (
-                    <label className="flex flex-col gap-1">
+                    <label className="flex flex-col gap-1 min-w-0">
                       <span className="text-sm font-medium text-gray-700">Μήνες</span>
                       <input 
                         type="number" 
@@ -571,7 +593,7 @@ export default function CalculatorPage() {
                         max={10} 
                         value={y.substituteMonths} 
                         onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, substituteMonths: parseInt(e.target.value) || 0 } : it)))} 
-                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-16"
+                        className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20"
                       />
                     </label>
                   )}
@@ -629,11 +651,11 @@ export default function CalculatorPage() {
                    
                    <div className="space-y-3">
                      {y.placements.map((p, pIdx) => (
-                       <div key={pIdx} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-center p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                         <div className="flex items-center gap-3 md:col-span-2">
-                           <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{pIdx + 1}</span>
+                       <div key={pIdx} className="flex flex-wrap items-center gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                         <div className="flex items-center gap-3 min-w-0 flex-1">
+                           <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold flex-shrink-0">#{pIdx + 1}</span>
                            <input 
-                             className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                             className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0" 
                              placeholder="Όνομα σχολείου" 
                              value={p.schoolName} 
                              onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, schoolName: e.target.value } : pp)) } : it)))} 
@@ -641,7 +663,7 @@ export default function CalculatorPage() {
                          </div>
                          
                          {y.isSubstitute && (
-                           <label className="flex items-center gap-2">
+                           <label className="flex items-center gap-2 flex-shrink-0">
                              <span className="text-sm font-medium text-gray-700">Ώρες/εβδ.</span>
                              <input 
                                type="number" 
@@ -653,7 +675,7 @@ export default function CalculatorPage() {
                            </label>
                          )}
                          
-                         <label className="flex items-center gap-2">
+                         <label className="flex items-center gap-2 flex-shrink-0">
                            <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
                            <input 
                              type="number" 
@@ -697,7 +719,7 @@ export default function CalculatorPage() {
                        <div className="flex justify-between items-center text-sm">
                          <span className="font-medium text-gray-700">Σύνολο ωρών σχολείων:</span>
                          <span className="font-bold text-gray-900">
-                           {y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0).toFixed(1)} / {y.totalWeeklyHours}
+                           {Math.round(y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0))} / {y.totalWeeklyHours}
                          </span>
                        </div>
                      </div>
