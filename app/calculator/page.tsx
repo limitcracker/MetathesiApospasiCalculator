@@ -289,20 +289,20 @@ export default function CalculatorPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
-                        <div className="text-center space-y-4 relative">
-                    <h1 className="text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
-                    <p className="text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
-                    <button
-                      onClick={() => setShowUpcomingModal(true)}
-                      className="absolute top-0 right-0 p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                      title="Προσεχείς λειτουργίες & Σχετικά με τον προγραμματιστή"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </button>
-                  </div>
+    <main className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8 bg-white rounded-lg shadow-sm">
+      <div className="text-center space-y-4 relative">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Υπολογισμός Μορίων</h1>
+        <p className="text-sm sm:text-base text-gray-600">Εκπαιδευτικοί Μεταθέσεις & Αποσπάσεις</p>
+        <button
+          onClick={() => setShowUpcomingModal(true)}
+          className="absolute top-0 right-0 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+          title="Προσεχείς λειτουργίες & Σχετικά με τον προγραμματιστή"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+      </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -345,11 +345,11 @@ export default function CalculatorPage() {
             </div>
           </label>
           
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={exportData}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm flex items-center gap-2"
+              className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm flex items-center justify-center gap-2 text-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -357,7 +357,7 @@ export default function CalculatorPage() {
               Εξαγωγή
             </button>
             
-            <label className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2 cursor-pointer">
+            <label className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer text-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
@@ -375,9 +375,9 @@ export default function CalculatorPage() {
 
       {/* Κριτήρια (μια φορά) */}
       {selectedFlow && (
-        <section className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">Κριτήρια (Μια Φορά)</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <section className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-6 space-y-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 border-b border-gray-200 pb-2">Κριτήρια (Μια Φορά)</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {enabledKeys.has('marriage') && (
               <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                 <input 
@@ -462,10 +462,10 @@ export default function CalculatorPage() {
 
       {/* Διαχείριση Ετών */}
       {selectedFlow && selectedFlow.slug !== 'neodioristos' && (
-        <section className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-4">
-          <div className="flex items-center justify-between">
+        <section className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-4">
-              <h2 className="text-xl font-semibold text-gray-900">Έτη Εργασίας</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Έτη Εργασίας</h2>
               {(() => {
                 let totalMonths = 0
                 for (const year of yearsList) {
@@ -517,9 +517,11 @@ export default function CalculatorPage() {
           <div className="space-y-2">
             {yearsList.map((y, idx) => (
               <div key={y.id} className="border border-gray-200 rounded-lg bg-white shadow-sm">
-                <div className="flex items-center gap-4 p-4">
-                  <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{idx + 1}</span>
-                  <span className="font-medium text-gray-900">Έτος {y.year}</span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
+                  <div className="flex items-center gap-3">
+                    <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{idx + 1}</span>
+                    <span className="font-medium text-gray-900">Έτος {y.year}</span>
+                  </div>
                   <span className="text-sm text-gray-600">
                     ({computeYearPoints(y).toFixed(2)} μόρια = {(() => {
                       // Calculate MSD points only
@@ -598,7 +600,7 @@ export default function CalculatorPage() {
                       return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ`
                     })()})
                   </span>
-                  <div className="flex items-center gap-2 ml-auto">
+                  <div className="flex flex-wrap items-center gap-2 ml-auto">
                     <button
                       type="button"
                       onClick={() => {
@@ -846,8 +848,8 @@ export default function CalculatorPage() {
                    
                    <div className="space-y-3">
                      {y.placements.map((p, pIdx) => (
-                       <div key={pIdx} className="flex flex-wrap items-center gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                         <div className="flex items-center gap-3 min-w-0 flex-1">
+                       <div key={pIdx} className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                         <div className="flex items-center gap-3 min-w-0 flex-1 w-full sm:w-auto">
                            <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold flex-shrink-0">#{pIdx + 1}</span>
                            <input 
                              className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0 text-gray-900" 
@@ -857,61 +859,63 @@ export default function CalculatorPage() {
                            />
                          </div>
                          
-                         {y.isSubstitute && (
+                         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                           {y.isSubstitute && (
+                             <label className="flex items-center gap-2 flex-shrink-0">
+                               <span className="text-sm font-medium text-gray-700">Ώρες/εβδ.</span>
+                               <input 
+                                 type="number" 
+                                 min={0} 
+                                 value={p.weeklyHours ?? 0} 
+                                 onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, weeklyHours: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
+                                 className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               />
+                             </label>
+                           )}
+                           
                            <label className="flex items-center gap-2 flex-shrink-0">
-                             <span className="text-sm font-medium text-gray-700">Ώρες/εβδ.</span>
+                             <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
                              <input 
                                type="number" 
-                               min={0} 
-                               value={p.weeklyHours ?? 0} 
-                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, weeklyHours: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
+                               min={1} 
+                               max={14} 
+                               value={p.msd} 
+                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
                                className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                              />
                            </label>
-                         )}
-                         
-                         <label className="flex items-center gap-2 flex-shrink-0">
-                           <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
-                           <input 
-                             type="number" 
-                             min={1} 
-                             max={14} 
-                             value={p.msd} 
-                             onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
-                             className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                           />
-                         </label>
-                         
-                         <label className="flex items-center gap-2">
-                           <input 
-                             type="checkbox" 
-                             checked={p.isPrison} 
-                             onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, isPrison: e.target.checked } : pp)) } : it)))}
-                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                           />
-                           <span className="text-sm font-medium text-gray-700">Φυλακή</span>
-                         </label>
-                         
-                         <button 
-                           type="button" 
-                           className={`px-3 py-2 text-sm border rounded-lg transition-colors font-medium ${
-                             y.placements.length === 1 
-                               ? 'border-gray-300 text-gray-400 cursor-not-allowed' 
-                               : 'border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400'
-                           }`}
-                           onClick={() => {
-                             if (y.placements.length > 1) {
-                               setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
-                                 ...it, 
-                                 placements: it.placements.filter((_, j) => j !== pIdx) 
-                               } : it)))
-                             }
-                           }}
-                           disabled={y.placements.length === 1}
-                           title={y.placements.length === 1 ? "Απαιτείται τουλάχιστον ένα σχολείο" : "Διαγραφή σχολείου"}
-                         >
-                           Διαγραφή
-                         </button>
+                           
+                           <label className="flex items-center gap-2">
+                             <input 
+                               type="checkbox" 
+                               checked={p.isPrison} 
+                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, isPrison: e.target.checked } : pp)) } : it)))}
+                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                             />
+                             <span className="text-sm font-medium text-gray-700">Φυλακή</span>
+                           </label>
+                           
+                           <button 
+                             type="button" 
+                             className={`px-3 py-2 text-sm border rounded-lg transition-colors font-medium ${
+                               y.placements.length === 1 
+                                 ? 'border-gray-300 text-gray-400 cursor-not-allowed' 
+                                 : 'border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400'
+                             }`}
+                             onClick={() => {
+                               if (y.placements.length > 1) {
+                                 setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                                   ...it, 
+                                   placements: it.placements.filter((_, j) => j !== pIdx) 
+                                 } : it)))
+                               }
+                             }}
+                             disabled={y.placements.length === 1}
+                             title={y.placements.length === 1 ? "Απαιτείται τουλάχιστον ένα σχολείο" : "Διαγραφή σχολείου"}
+                           >
+                             Διαγραφή
+                           </button>
+                         </div>
                        </div>
                      ))}
                    </div>
@@ -936,9 +940,9 @@ export default function CalculatorPage() {
          </section>
        )}
 
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
-        <div className="text-2xl font-bold">Σύνολο Μορίων</div>
-        <div className="text-4xl font-bold mt-2">{total.toFixed(2)}</div>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-4 sm:p-6 text-center shadow-lg">
+        <div className="text-xl sm:text-2xl font-bold">Σύνολο Μορίων</div>
+        <div className="text-3xl sm:text-4xl font-bold mt-2">{total.toFixed(2)}</div>
         <div className="text-blue-100 text-sm mt-1">μόρια</div>
         <div className="text-blue-100 text-sm mt-2">
           {(() => {
@@ -1051,6 +1055,7 @@ export default function CalculatorPage() {
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• Εξαγωγή σε PDF</li>
                   <li>• Αυτόματη αναζήτηση Σχολείου → ΜΣΔ</li>
+                  <li>• Ωρομίσθιοι</li>
                 </ul>
               </div>
               
