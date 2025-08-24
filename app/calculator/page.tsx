@@ -503,7 +503,84 @@ export default function CalculatorPage() {
                 <div className="flex items-center gap-4 p-4">
                   <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{idx + 1}</span>
                   <span className="font-medium text-gray-900">Έτος {y.year}</span>
-                  <span className="text-sm text-gray-600">({computeYearPoints(y).toFixed(2)} μόρια)</span>
+                  <span className="text-sm text-gray-600">
+                    ({computeYearPoints(y).toFixed(2)} μόρια: {(() => {
+                      // Calculate MSD points only
+                      if (!selectedFlow) return '0.00'
+                      const configByKey = new Map<string, unknown>()
+                      for (const fc of selectedFlow.flowCriteria) {
+                        configByKey.set(fc.criterion.key, fc.config)
+                      }
+                      let msdPoints = 0
+                      const getCfg = (k: string): unknown => configByKey.get(k)
+                      
+                      const dys = getCfg('dysprosita')
+                      const pris = getCfg('prisons')
+                      const msd = getCfg('msd')
+                      if (msd) {
+                        if (supportsSubstitute && y.isSubstitute) {
+                          const totalWeeklyHours = y.totalWeeklyHours
+                          for (const pl of y.placements) {
+                            let val = pl.msd
+                            const threshold = readNumber(dys, 'threshold') || 10
+                            const isDys = pl.msd >= threshold
+                            if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+                            const extra = readNumber(pris, 'extraMsd')
+                            if (pl.isPrison && extra) val += extra
+                            
+                            const schoolWeeklyHours = pl.weeklyHours || 0
+                            const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
+                            const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (y.substituteMonths / 12)
+                            msdPoints += partition
+                          }
+                        } else {
+                          for (const pl of y.placements) {
+                            let val = pl.msd
+                            const threshold = readNumber(dys, 'threshold') || 10
+                            const isDys = pl.msd >= threshold
+                            if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+                            const extra = readNumber(pris, 'extraMsd')
+                            if (pl.isPrison && extra) val += extra
+                            
+                            const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(y)
+                            const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14 && hasConsecutiveHighMSD) ? 2 : 1
+                            const monthsFactor = pl.months / 12
+                            msdPoints += val * msdMultiplier * monthsFactor
+                          }
+                        }
+                      }
+                      
+                      // Calculate duration points
+                      let durationPoints = 0
+                      if (flows && selectedFlowId !== flows.find(f => f.slug === 'neodioristos')?.id) {
+                        let totalMonths = 0
+                        if (supportsSubstitute && y.isSubstitute) {
+                          totalMonths = y.substituteMonths
+                        } else {
+                          totalMonths = y.placements.reduce((sum, p) => sum + p.months, 0)
+                        }
+                        
+                        const totalYears = totalMonths / 12
+                        
+                        if (selectedFlow?.slug === 'metathesi') {
+                          durationPoints = totalYears * 2.5
+                        } else if (selectedFlow?.slug === 'apospasi') {
+                          if (totalYears <= 10) {
+                            durationPoints = totalYears * 1
+                          } else if (totalYears <= 20) {
+                            durationPoints = totalYears * 1.5
+                          } else {
+                            durationPoints = totalYears * 2
+                          }
+                        } else {
+                          const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
+                          durationPoints = perYearBase * totalYears
+                        }
+                      }
+                      
+                      return `${msdPoints.toFixed(2)} + ${durationPoints.toFixed(2)}`
+                    })()})
+                  </span>
                   <button
                     type="button"
                     className="px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium ml-auto"
