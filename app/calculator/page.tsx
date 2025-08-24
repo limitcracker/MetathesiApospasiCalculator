@@ -391,7 +391,7 @@ export default function CalculatorPage() {
                      </label>
                    )}
                    
-                   {supportsSubstitute && y.isSubstitute && (
+                                      {supportsSubstitute && y.isSubstitute && (
                      <>
                        <label className="flex flex-col gap-2">
                          <span className="text-sm font-medium text-gray-700">Συνολικές εβδομαδιαίες ώρες (ωράριο)</span>
@@ -419,12 +419,101 @@ export default function CalculatorPage() {
                        </label>
                      </>
                    )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+                 </div>
+                 
+                 {/* Schools Section */}
+                 <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+                   <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                     <h3 className="font-semibold text-gray-900">Σχολεία (έτος {y.year})</h3>
+                     <button
+                       type="button"
+                       onClick={() => {
+                         setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                           ...it, 
+                           placements: [...it.placements, { 
+                             schoolName: '', 
+                             months: 12, 
+                             msd: 1, 
+                             isPrison: false, 
+                             weeklyHours: y.isSubstitute ? Math.floor(y.totalWeeklyHours / (it.placements.length + 1)) : 0 
+                           }] 
+                         } : it)))
+                       }}
+                       className="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors shadow-sm"
+                     >
+                       + Σχολείο
+                     </button>
+                   </div>
+                   
+                   <div className="space-y-3">
+                     {y.placements.map((p, pIdx) => (
+                       <div key={pIdx} className="grid grid-cols-1 md:grid-cols-6 gap-3 items-center p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                         <div className="flex items-center gap-3 md:col-span-2">
+                           <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{pIdx + 1}</span>
+                           <input 
+                             className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                             placeholder="Όνομα σχολείου" 
+                             value={p.schoolName} 
+                             onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, schoolName: e.target.value } : pp)) } : it)))} 
+                           />
+                         </div>
+                         
+                         {y.isSubstitute && (
+                           <label className="flex items-center gap-2">
+                             <span className="text-sm font-medium text-gray-700">Ώρες/εβδ.</span>
+                             <input 
+                               type="number" 
+                               min={0} 
+                               value={p.weeklyHours ?? 0} 
+                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, weeklyHours: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
+                               className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                             />
+                           </label>
+                         )}
+                         
+                         <label className="flex items-center gap-2">
+                           <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
+                           <input 
+                             type="number" 
+                             min={1} 
+                             max={14} 
+                             value={p.msd} 
+                             onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
+                             className="border border-gray-300 rounded-lg p-2 w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           />
+                         </label>
+                         
+                         <label className="flex items-center gap-2">
+                           <input 
+                             type="checkbox" 
+                             checked={p.isPrison} 
+                             onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, isPrison: e.target.checked } : pp)) } : it)))}
+                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                           />
+                           <span className="text-sm font-medium text-gray-700">Φυλακή</span>
+                         </label>
+                         
+                         <button 
+                           type="button" 
+                           className="px-3 py-2 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium" 
+                           onClick={() => {
+                             setYearsList((arr) => arr.map((it, i) => (i === idx ? { 
+                               ...it, 
+                               placements: it.placements.filter((_, j) => j !== pIdx) 
+                             } : it)))
+                           }}
+                         >
+                           Διαγραφή
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               </div>
+             ))}
+           </div>
+         </section>
+       )}
 
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6 text-center shadow-lg">
         <div className="text-2xl font-bold">Σύνολο Μορίων</div>
