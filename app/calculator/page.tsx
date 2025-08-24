@@ -24,8 +24,14 @@ function readBoolean(obj: unknown, key: string): boolean {
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export default function CalculatorPage() {
-  const { data: flows } = useSWR<FlowSummary[]>("/api/flows", fetcher)
+  const { data: flows, error, isLoading } = useSWR<FlowSummary[]>("/api/flows", fetcher)
   const [selectedFlowId, setSelectedFlowId] = useState<string>('')
+
+  useEffect(() => {
+    if (flows && flows.length && !selectedFlowId) {
+      setSelectedFlowId(flows[0].id)
+    }
+  }, [flows, selectedFlowId])
 
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-8 bg-white rounded-lg shadow-sm">
@@ -43,8 +49,11 @@ export default function CalculatorPage() {
               name="flow-select"
               value={selectedFlowId} 
               onChange={(e) => setSelectedFlowId(e.target.value)} 
-              className="border border-blue-300 rounded-lg p-3 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              disabled={isLoading}
+              className="border border-blue-300 rounded-lg p-3 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50"
             >
+              {isLoading && <option>Φόρτωση...</option>}
+              {error && <option>Σφάλμα φόρτωσης</option>}
               {flows?.map((f) => (
                 <option key={f.id} value={f.id}>{f.name}</option>
               ))}
