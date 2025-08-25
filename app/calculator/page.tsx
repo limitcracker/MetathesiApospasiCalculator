@@ -181,7 +181,7 @@ export default function CalculatorPage() {
           
           // Apply x2 multiplier if ALL schools have MSD >= 10 AND consecutive years condition is met
           const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14 && hasConsecutiveHighMSD) ? 2 : 1
-          const monthsFactor = pl.months / 12
+          const monthsFactor = 12 / 12 // Always 12 months for regular teachers
           points += weightedMsd * msdMultiplier * monthsFactor
         }
       }
@@ -778,7 +778,8 @@ export default function CalculatorPage() {
                     </label>
                   )}
                   
-                  {supportsSubstitute && y.isSubstitute && (
+                  {/* Total Weekly Hours - Show for substitute OR for regular teachers with multiple schools */}
+                  {(supportsSubstitute && y.isSubstitute) || (!y.isSubstitute && y.placements.length > 1) ? (
                     <label className="flex flex-col gap-1">
                       <span className="text-sm font-medium text-gray-700">Συνολικές ώρες</span>
                       <input 
@@ -792,8 +793,9 @@ export default function CalculatorPage() {
                         className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                       />
                     </label>
-                  )}
+                  ) : null}
                   
+                  {/* Months - Show for substitute teachers only */}
                   {supportsSubstitute && y.isSubstitute && (
                     <label className="flex flex-col gap-1">
                       <span className="text-sm font-medium text-gray-700">Μήνες</span>
@@ -805,6 +807,16 @@ export default function CalculatorPage() {
                         onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, substituteMonths: parseInt(e.target.value) || 0 } : it)))} 
                         className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                       />
+                    </label>
+                  )}
+                  
+                  {/* Months display for regular teachers (fixed at 12) */}
+                  {!y.isSubstitute && (
+                    <label className="flex flex-col gap-1">
+                      <span className="text-sm font-medium text-gray-700">Μήνες</span>
+                      <div className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium bg-gray-50 w-full">
+                        12
+                      </div>
                     </label>
                   )}
                 </div>
@@ -827,7 +839,7 @@ export default function CalculatorPage() {
                              months: 12, 
                              msd: 1, 
                              isPrison: false, 
-                             weeklyHours: y.isSubstitute ? (y.placements.length === 0 ? y.totalWeeklyHours : Math.max(0, remainingHours)) : 0 
+                             weeklyHours: (y.isSubstitute || y.placements.length > 0) ? (y.placements.length === 0 ? y.totalWeeklyHours : Math.max(0, remainingHours)) : 0 
                            }] 
                          } : it)))
                        }}
@@ -852,7 +864,7 @@ export default function CalculatorPage() {
                    )}
                    
                    {/* Weekly Hours Validation Warning */}
-                   {y.isSubstitute && y.placements.length > 0 && (() => {
+                   {(y.isSubstitute || (!y.isSubstitute && y.placements.length > 1)) && y.placements.length > 0 && (() => {
                      const totalSchoolHours = y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
                      const difference = y.totalWeeklyHours - totalSchoolHours
                      if (Math.abs(difference) > 0.1) {
@@ -887,7 +899,7 @@ export default function CalculatorPage() {
                          </div>
                          
                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
-                           {y.isSubstitute && (
+                           {(y.isSubstitute || (!y.isSubstitute && y.placements.length > 1)) && (
                              <label className="flex flex-col gap-1">
                                <span className="text-sm font-medium text-gray-700">Ώρες/εβδ.</span>
                                <input 
@@ -948,7 +960,7 @@ export default function CalculatorPage() {
                    </div>
                    
                    {/* Weekly Hours Summary */}
-                   {y.isSubstitute && (
+                   {(y.isSubstitute || (!y.isSubstitute && y.placements.length > 1)) && (
                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-sm">
                          <span className="font-medium text-gray-700">Σύνολο ωρών σχολείων:</span>
