@@ -103,12 +103,12 @@ export default function CalculatorPage() {
     const currentYearHasHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10)
     if (!currentYearHasHighMSD) return false
     
-    // Count how many μόνιμος years have high MSD
+    // Count how many μόνιμος years have high MSD (excluding the current year)
     let highMSDCount = 0
     
     for (const checkYear of yearsList) {
-      // Only count μόνιμος years
-      if (checkYear.isSubstitute) continue
+      // Skip the current year and substitute years
+      if (checkYear.id === year.id || checkYear.isSubstitute) continue
       
       // Check if this year has high MSD
       const hasHighMSD = checkYear.placements.length > 0 && checkYear.placements.every(p => p.msd >= 10)
@@ -117,8 +117,8 @@ export default function CalculatorPage() {
       }
     }
     
-    // Need at least 2 μόνιμος years with high MSD
-    return highMSDCount >= 2
+    // Need at least 1 other μόνιμος year with high MSD (plus current year = 2 total)
+    return highMSDCount >= 1
   }
 
   // Function to calculate points for a single year
