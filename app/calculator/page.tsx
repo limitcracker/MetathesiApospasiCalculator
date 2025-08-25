@@ -43,7 +43,7 @@ export default function CalculatorPage() {
       isSubstitute: false, // Default to Μόνιμος
       totalWeeklyHours: 23,
       substituteMonths: 10,
-      placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 0 }], // Will be updated when isSubstitute changes
+      placements: [{ schoolName: '', months: 12, msd: 1, isPrison: false, weeklyHours: 23 }], // Set to totalWeeklyHours for regular teachers
     },
   ])
   
@@ -63,6 +63,23 @@ export default function CalculatorPage() {
       setSelectedFlowId(flows[0].id)
     }
   }, [flows, selectedFlowId])
+
+  // Ensure weekly hours are set correctly for regular teachers with single school
+  useEffect(() => {
+    setYearsList(currentList => 
+      currentList.map(year => {
+        if (!year.isSubstitute && year.placements.length === 1) {
+          // For regular teachers with single school, set weekly hours to total hours
+          const updatedPlacements = year.placements.map(placement => ({
+            ...placement,
+            weeklyHours: year.totalWeeklyHours
+          }))
+          return { ...year, placements: updatedPlacements }
+        }
+        return year
+      })
+    )
+  }, [])
 
   // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
