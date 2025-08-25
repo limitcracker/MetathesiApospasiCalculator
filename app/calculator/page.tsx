@@ -1168,7 +1168,7 @@ export default function CalculatorPage() {
                   στον υπολογισμό των μορίων για μεταθέσεις και αποσπάσεις.
                 </p>
                 <p className="text-sm text-gray-600 mt-2">
-                  Εκδόσεις: v1.1<br/>
+                  Εκδόσεις: v1.3<br/>
                   <a href="https://github.com/limitcracker/MetathesiApospasiCalculator" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">
                     Github repo 🔗
                   </a>
