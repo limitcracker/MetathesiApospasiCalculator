@@ -25,7 +25,7 @@ const staticFlows = [
       { criterion: { key: 'entopiotita', label: 'Εντοπιότητα' }, config: { points: 2 } },
       { criterion: { key: 'proypiresia', label: 'Προϋπηρεσία (έτη)' }, config: { perYear: 2.5 } },
       { criterion: { key: 'msd', label: 'Συνθήκες Διαβίωσης (ΜΣΔ)' }, config: { perYear: true } },
-      { criterion: { key: 'dysprosita', label: 'Δυσπρόσιτα' }, config: { doublesMsd: true, threshold: 10 } },
+      { criterion: { key: 'dysprosita', label: 'Δυσπρόσιτα' }, config: { doublesMsd: true, threshold: 11 } },
       { criterion: { key: 'prisons', label: 'Κατάστημα Κράτησης / Φυλακές' }, config: { extraMsd: 5 } },
       { criterion: { key: 'firstPreference', label: 'Πρώτη Προτίμηση' }, config: { points: 2 } },
     ]
