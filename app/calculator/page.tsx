@@ -123,16 +123,36 @@ export default function CalculatorPage() {
     // Count how many μόνιμος years have high MSD (excluding the current year)
     let highMSDCount = 0
     
+    console.log(`\n=== DEBUG: Checking consecutive years for year ${year.year} ===`)
+    console.log(`Current year has high MSD: ${currentYearHasHighMSD}`)
+    console.log(`Total years in list: ${yearsList.length}`)
+    
     for (const checkYear of yearsList) {
+      console.log(`Checking year ${checkYear.year} (ID: ${checkYear.id}):`)
+      console.log(`  - Is current year: ${checkYear.id === year.id}`)
+      console.log(`  - Is substitute: ${checkYear.isSubstitute}`)
+      console.log(`  - Has placements: ${checkYear.placements.length > 0}`)
+      console.log(`  - All placements have MSD >= 10: ${checkYear.placements.every(p => p.msd >= 10)}`)
+      
       // Skip the current year and substitute years
-      if (checkYear.id === year.id || checkYear.isSubstitute) continue
+      if (checkYear.id === year.id || checkYear.isSubstitute) {
+        console.log(`  - SKIPPING (current year or substitute)`)
+        continue
+      }
       
       // Check if this year has high MSD
       const hasHighMSD = checkYear.placements.length > 0 && checkYear.placements.every(p => p.msd >= 10)
       if (hasHighMSD) {
         highMSDCount++
+        console.log(`  - COUNTING (has high MSD)`)
+      } else {
+        console.log(`  - NOT COUNTING (no high MSD)`)
       }
     }
+    
+    console.log(`Final highMSDCount = ${highMSDCount}`)
+    console.log(`Function should return: ${highMSDCount >= 1}`)
+    console.log(`=== END DEBUG ===\n`)
     
     // Need at least 1 other μόνιμος year with high MSD (plus current year = 2 total)
     return highMSDCount >= 1
@@ -605,6 +625,13 @@ export default function CalculatorPage() {
                             
                             // Check if ALL schools in this year have MSD >= 10 (for x2 multiplier)
                             const allSchoolsHaveHighMSD = y.placements.length > 0 && y.placements.every(p => p.msd >= 10)
+                            
+                            // Debug: Log the conditions for this year
+                            console.log(`\n=== DISPLAY DEBUG for year ${y.year} ===`)
+                            console.log(`hasConsecutiveHighMSD = ${hasConsecutiveHighMSD}`)
+                            console.log(`allSchoolsHaveHighMSD = ${allSchoolsHaveHighMSD}`)
+                            console.log(`msdMultiplier will be: ${(allSchoolsHaveHighMSD && hasConsecutiveHighMSD) ? 2 : 1}`)
+                            console.log(`=== END DISPLAY DEBUG ===\n`)
                             
                             // Calculate weighted MSD points for each placement
                             for (const pl of y.placements) {
