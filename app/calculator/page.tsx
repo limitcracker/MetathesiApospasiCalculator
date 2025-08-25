@@ -1066,6 +1066,8 @@ export default function CalculatorPage() {
                   // Check if ALL schools in this year have MSD >= 10 (for x2 multiplier)
                   const allSchoolsHaveHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10)
                   
+
+                  
                   // Calculate weighted MSD points for each placement
                   for (const pl of year.placements) {
                     let val = pl.msd
