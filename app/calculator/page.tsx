@@ -547,104 +547,106 @@ export default function CalculatorPage() {
             {yearsList.map((y, idx) => (
               <div key={y.id} className="border border-gray-200 rounded-lg bg-white shadow-sm">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
-                  <div className="flex items-center gap-3">
-                    <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">#{idx + 1}</span>
-                    <span className="font-medium text-gray-900">Έτος {y.year}</span>
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold flex-shrink-0">#{idx + 1}</span>
+                    <span className="font-medium text-gray-900 flex-shrink-0">Έτος {y.year}</span>
                   </div>
-                  <span className="text-sm text-gray-600">
-                    ({computeYearPoints(y).toFixed(2)} μόρια = {(() => {
-                      // Calculate MSD points only
-                      if (!selectedFlow) return '0.00'
-                      const configByKey = new Map<string, unknown>()
-                      for (const fc of selectedFlow.flowCriteria) {
-                        configByKey.set(fc.criterion.key, fc.config)
-                      }
-                      let msdPoints = 0
-                      const getCfg = (k: string): unknown => configByKey.get(k)
-                      
-                      const dys = getCfg('dysprosita')
-                      const pris = getCfg('prisons')
-                      const msd = getCfg('msd')
-                      if (msd) {
-                        if (supportsSubstitute && y.isSubstitute) {
-                          const totalWeeklyHours = y.totalWeeklyHours
-                          for (const pl of y.placements) {
-                            let val = pl.msd
-                            const threshold = readNumber(dys, 'threshold') || 10
-                            const isDys = pl.msd >= threshold
-                            if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
-                            const extra = readNumber(pris, 'extraMsd')
-                            if (pl.isPrison && extra) val += extra
-                            
-                            const schoolWeeklyHours = pl.weeklyHours || 0
-                            // For substitute teachers, no consecutive year requirement for MSD 10-14
-                            const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
-                            const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (y.substituteMonths / 12)
-                            msdPoints += partition
-                          }
-                        } else {
-                          // For regular teachers, calculate weighted MSD points based on weekly hours
-                          const totalWeeklyHours = y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
-                          
-                          // Check if there are at least 2 consecutive years with MSD 10-14
-                          const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(y)
-                          
-                          // Check if ALL schools in this year have MSD >= 10 (for x2 multiplier)
-                          const allSchoolsHaveHighMSD = y.placements.length > 0 && y.placements.every(p => p.msd >= 10 && p.msd <= 14)
-                          
-                          // Calculate weighted MSD points for each placement
-                          for (const pl of y.placements) {
-                            let val = pl.msd
-                            const threshold = readNumber(dys, 'threshold') || 10
-                            const isDys = pl.msd >= threshold
-                            if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
-                            const extra = readNumber(pris, 'extraMsd')
-                            if (pl.isPrison && extra) val += extra
-                            
-                            // Calculate weighted MSD: (school weekly hours / total weekly hours) * MSD
-                            const schoolWeeklyHours = pl.weeklyHours || 0
-                            const weightedMsd = totalWeeklyHours > 0 ? (schoolWeeklyHours / totalWeeklyHours) * val : val
-                            
-                            // Apply x2 multiplier if ALL schools have MSD >= 10 AND consecutive years condition is met
-                            const msdMultiplier = (allSchoolsHaveHighMSD && hasConsecutiveHighMSD) ? 2 : 1
-                            const monthsFactor = 12 / 12 // Always 12 months for regular teachers
-                            msdPoints += weightedMsd * msdMultiplier * monthsFactor
-                          }
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 min-w-0 flex-1">
+                    <span className="text-sm text-gray-600 break-words">
+                      ({computeYearPoints(y).toFixed(2)} μόρια = {(() => {
+                        // Calculate MSD points only
+                        if (!selectedFlow) return '0.00'
+                        const configByKey = new Map<string, unknown>()
+                        for (const fc of selectedFlow.flowCriteria) {
+                          configByKey.set(fc.criterion.key, fc.config)
                         }
-                      }
-                      
-                      // Calculate duration points for this year only (not total experience)
-                      let durationPoints = 0
-                      if (flows && selectedFlowId !== flows.find(f => f.slug === 'neodioristos')?.id) {
-                        let yearMonths = 0
-                        if (supportsSubstitute && y.isSubstitute) {
-                          yearMonths = y.substituteMonths
-                        } else {
-                          yearMonths = 12 // Always 12 months for regular teachers
-                        }
+                        let msdPoints = 0
+                        const getCfg = (k: string): unknown => configByKey.get(k)
                         
-                        const yearYears = yearMonths / 12
-                        
-                        if (selectedFlow?.slug === 'metathesi') {
-                          durationPoints = yearYears * 2.5
-                        } else if (selectedFlow?.slug === 'apospasi') {
-                          if (yearYears <= 10) {
-                            durationPoints = yearYears * 1
-                          } else if (yearYears <= 20) {
-                            durationPoints = yearYears * 1.5
+                        const dys = getCfg('dysprosita')
+                        const pris = getCfg('prisons')
+                        const msd = getCfg('msd')
+                        if (msd) {
+                          if (supportsSubstitute && y.isSubstitute) {
+                            const totalWeeklyHours = y.totalWeeklyHours
+                            for (const pl of y.placements) {
+                              let val = pl.msd
+                              const threshold = readNumber(dys, 'threshold') || 10
+                              const isDys = pl.msd >= threshold
+                              if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+                              const extra = readNumber(pris, 'extraMsd')
+                              if (pl.isPrison && extra) val += extra
+                              
+                              const schoolWeeklyHours = pl.weeklyHours || 0
+                              // For substitute teachers, no consecutive year requirement for MSD 10-14
+                              const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
+                              const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (y.substituteMonths / 12)
+                              msdPoints += partition
+                            }
                           } else {
-                            durationPoints = yearYears * 2
+                            // For regular teachers, calculate weighted MSD points based on weekly hours
+                            const totalWeeklyHours = y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
+                            
+                            // Check if there are at least 2 consecutive years with MSD 10-14
+                            const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(y)
+                            
+                            // Check if ALL schools in this year have MSD >= 10 (for x2 multiplier)
+                            const allSchoolsHaveHighMSD = y.placements.length > 0 && y.placements.every(p => p.msd >= 10 && p.msd <= 14)
+                            
+                            // Calculate weighted MSD points for each placement
+                            for (const pl of y.placements) {
+                              let val = pl.msd
+                              const threshold = readNumber(dys, 'threshold') || 10
+                              const isDys = pl.msd >= threshold
+                              if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
+                              const extra = readNumber(pris, 'extraMsd')
+                              if (pl.isPrison && extra) val += extra
+                              
+                              // Calculate weighted MSD: (school weekly hours / total weekly hours) * MSD
+                              const schoolWeeklyHours = pl.weeklyHours || 0
+                              const weightedMsd = totalWeeklyHours > 0 ? (schoolWeeklyHours / totalWeeklyHours) * val : val
+                              
+                              // Apply x2 multiplier if ALL schools have MSD >= 10 AND consecutive years condition is met
+                              const msdMultiplier = (allSchoolsHaveHighMSD && hasConsecutiveHighMSD) ? 2 : 1
+                              const monthsFactor = 12 / 12 // Always 12 months for regular teachers
+                              msdPoints += weightedMsd * msdMultiplier * monthsFactor
+                            }
                           }
-                        } else {
-                          const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
-                          durationPoints = perYearBase * yearYears
                         }
-                      }
-                      
-                      return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ`
-                    })()})
-                  </span>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 ml-auto">
+                        
+                        // Calculate duration points for this year only (not total experience)
+                        let durationPoints = 0
+                        if (flows && selectedFlowId !== flows.find(f => f.slug === 'neodioristos')?.id) {
+                          let yearMonths = 0
+                          if (supportsSubstitute && y.isSubstitute) {
+                            yearMonths = y.substituteMonths
+                          } else {
+                            yearMonths = 12 // Always 12 months for regular teachers
+                          }
+                          
+                          const yearYears = yearMonths / 12
+                          
+                          if (selectedFlow?.slug === 'metathesi') {
+                            durationPoints = yearYears * 2.5
+                          } else if (selectedFlow?.slug === 'apospasi') {
+                            if (yearYears <= 10) {
+                              durationPoints = yearYears * 1
+                            } else if (yearYears <= 20) {
+                              durationPoints = yearYears * 1.5
+                            } else {
+                              durationPoints = yearYears * 2
+                            }
+                          } else {
+                            const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
+                            durationPoints = perYearBase * yearYears
+                          }
+                        }
+                        
+                        return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ`
+                      })()})
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-1 sm:gap-2 flex-shrink-0">
                     <button
                       type="button"
                       onClick={() => {
@@ -661,7 +663,7 @@ export default function CalculatorPage() {
                         })
                         setExpandedYearId(newYear.id)
                       }}
-                      className="px-2 py-1 text-xs border border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-colors font-medium"
+                      className="px-2 py-1 text-xs border border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-colors font-medium whitespace-nowrap"
                       title="Διπλασιασμός έτους"
                     >
                       Διπλ
@@ -706,7 +708,7 @@ export default function CalculatorPage() {
                     </button>
                     <button
                       type="button"
-                      className="px-3 py-1 text-sm border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium"
+                      className="px-2 py-1 text-xs border border-red-300 rounded-lg text-red-600 hover:bg-red-50 hover:border-red-400 transition-colors font-medium whitespace-nowrap"
                       onClick={() => setYearsList((arr) => arr.filter((_, i) => i !== idx))}
                     >
                       Διαγραφή
@@ -732,7 +734,7 @@ export default function CalculatorPage() {
                   <div className="px-4 pb-4 border-t border-gray-100">
                 
                                 {/* Basic year info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <label className="flex flex-col gap-1">
                     <span className="text-sm font-medium text-gray-700">Έτος</span>
                     <input
@@ -904,8 +906,8 @@ export default function CalculatorPage() {
                    
                    <div className="space-y-3">
                      {y.placements.map((p, pIdx) => (
-                       <div key={pIdx} className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                         <div className="flex items-center gap-3 min-w-0 flex-1 w-full sm:w-auto">
+                       <div key={pIdx} className="flex flex-col gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                         <div className="flex items-center gap-3 min-w-0 w-full">
                            <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold flex-shrink-0">#{pIdx + 1}</span>
                            <input 
                              className="border border-gray-300 rounded-lg p-2 flex-1 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0 text-gray-900" 
@@ -915,7 +917,7 @@ export default function CalculatorPage() {
                            />
                          </div>
                          
-                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 w-full">
                            {(y.isSubstitute || (!y.isSubstitute && y.placements.length > 1)) && (
                              <label className="flex flex-col gap-1">
                                <span className="text-sm font-medium text-gray-700">Ώρες/εβδ.</span>
@@ -953,7 +955,7 @@ export default function CalculatorPage() {
                            
                            <button 
                              type="button" 
-                             className={`px-3 py-2 text-sm border rounded-lg transition-colors font-medium ${
+                             className={`px-2 py-2 text-xs border rounded-lg transition-colors font-medium whitespace-nowrap ${
                                y.placements.length === 1 
                                  ? 'border-gray-300 text-gray-400 cursor-not-allowed' 
                                  : 'border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400'
