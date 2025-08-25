@@ -102,15 +102,15 @@ export default function CalculatorPage() {
     // Only apply to μόνιμος teachers
     if (year.isSubstitute) return false
     
-    // Check if current year has high MSD
-    const currentYearHasHighMSD = year.placements.some(p => p.msd >= 10 && p.msd <= 14)
+    // Check if current year has high MSD (ALL placements must have MSD >= 10)
+    const currentYearHasHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10 && p.msd <= 14)
     if (!currentYearHasHighMSD) return false
     
     // Check previous year (must also be μόνιμος)
     if (currentYearIndex > 0) {
       const prevYear = yearsList[currentYearIndex - 1]
       if (!prevYear.isSubstitute) { // Only check if previous year is also μόνιμος
-        const prevYearHasHighMSD = prevYear.placements.some(p => p.msd >= 10 && p.msd <= 14)
+        const prevYearHasHighMSD = prevYear.placements.length > 0 && prevYear.placements.every(p => p.msd >= 10 && p.msd <= 14)
         if (prevYearHasHighMSD) return true
       }
     }
@@ -119,7 +119,7 @@ export default function CalculatorPage() {
     if (currentYearIndex < yearsList.length - 1) {
       const nextYear = yearsList[currentYearIndex + 1]
       if (!nextYear.isSubstitute) { // Only check if next year is also μόνιμος
-        const nextYearHasHighMSD = nextYear.placements.some(p => p.msd >= 10 && p.msd <= 14)
+        const nextYearHasHighMSD = nextYear.placements.length > 0 && nextYear.placements.every(p => p.msd >= 10 && p.msd <= 14)
         if (nextYearHasHighMSD) return true
       }
     }
@@ -155,9 +155,8 @@ export default function CalculatorPage() {
           
           // Calculate partition: (school weekly hours / total weekly hours) * MSD * substitute months / 12
           const schoolWeeklyHours = pl.weeklyHours || 0
-          // Double MSD points if MSD is 10-14 (for substitute teachers, no consecutive year requirement)
-          const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
-          const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (year.substituteMonths / 12)
+          // Substitute teachers do NOT get x2 MSD points for MSD 10-14
+          const partition = (schoolWeeklyHours / totalWeeklyHours) * val * (year.substituteMonths / 12)
           points += partition
         }
       } else {
