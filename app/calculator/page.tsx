@@ -96,9 +96,6 @@ export default function CalculatorPage() {
 
   // Function to check if there are at least 2 consecutive years with MSD >= 10 (for μόνιμος teachers only)
   const hasConsecutiveYearsWithHighMSD = (year: typeof yearsList[0]): boolean => {
-    const currentYearIndex = yearsList.findIndex(y => y.id === year.id)
-    if (currentYearIndex === -1) return false
-    
     // Only apply to μόνιμος teachers
     if (year.isSubstitute) return false
     
@@ -106,36 +103,22 @@ export default function CalculatorPage() {
     const currentYearHasHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10)
     if (!currentYearHasHighMSD) return false
     
-    // Find the longest consecutive sequence of μόνιμος years with high MSD that includes the current year
-    let maxConsecutiveCount = 0
+    // Count how many μόνιμος years have high MSD
+    let highMSDCount = 0
     
-    // Try different starting points to find the longest consecutive sequence
-    for (let startIdx = 0; startIdx < yearsList.length; startIdx++) {
-      let consecutiveCount = 0
-      let includesCurrentYear = false
+    for (const checkYear of yearsList) {
+      // Only count μόνιμος years
+      if (checkYear.isSubstitute) continue
       
-      for (let i = startIdx; i < yearsList.length; i++) {
-        const checkYear = yearsList[i]
-        if (checkYear.isSubstitute) break // Stop if we hit a substitute year
-        
-        const hasHighMSD = checkYear.placements.length > 0 && checkYear.placements.every(p => p.msd >= 10)
-        if (hasHighMSD) {
-          consecutiveCount++
-          if (i === currentYearIndex) {
-            includesCurrentYear = true
-          }
-        } else {
-          break // Stop counting if we find a year without high MSD
-        }
-      }
-      
-      // Only consider sequences that include the current year
-      if (includesCurrentYear && consecutiveCount > maxConsecutiveCount) {
-        maxConsecutiveCount = consecutiveCount
+      // Check if this year has high MSD
+      const hasHighMSD = checkYear.placements.length > 0 && checkYear.placements.every(p => p.msd >= 10)
+      if (hasHighMSD) {
+        highMSDCount++
       }
     }
     
-    return maxConsecutiveCount >= 2
+    // Need at least 2 μόνιμος years with high MSD
+    return highMSDCount >= 2
   }
 
   // Function to calculate points for a single year
@@ -166,8 +149,9 @@ export default function CalculatorPage() {
           
           // Calculate partition: (school weekly hours / total weekly hours) * MSD * substitute months / 12
           const schoolWeeklyHours = pl.weeklyHours || 0
-          // Substitute teachers do NOT get x2 MSD points for MSD 10-14
-          const partition = (schoolWeeklyHours / totalWeeklyHours) * val * (year.substituteMonths / 12)
+          // Substitute teachers DO get x2 MSD points for MSD 10-14 (even in single year)
+          const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
+          const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (year.substituteMonths / 12)
           points += partition
         }
       } else {
@@ -565,7 +549,7 @@ export default function CalculatorPage() {
                   </div>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 min-w-0 flex-1">
                     <span className="text-sm text-gray-600 break-words">
-                      ({computeYearPoints(y).toFixed(2)} μόρια = {(() => {
+                      ({(() => {
                         // Calculate MSD points only
                         if (!selectedFlow) return '0.00'
                         const configByKey = new Map<string, unknown>()
@@ -654,7 +638,7 @@ export default function CalculatorPage() {
                         }
                         
                         const totalYearPoints = msdPoints + durationPoints
-                        return `${totalYearPoints.toFixed(2)} μόρια = ${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ`
+                        return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
                       })()})
                     </span>
                   </div>
