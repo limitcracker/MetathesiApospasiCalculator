@@ -166,6 +166,9 @@ export default function CalculatorPage() {
         // Check if there are at least 2 consecutive years with MSD 10-14
         const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(year)
         
+        // Check if ALL schools in this year have MSD >= 10 (for x2 multiplier)
+        const allSchoolsHaveHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10 && p.msd <= 14)
+        
         // Calculate weighted MSD points for each placement
         for (const pl of year.placements) {
           let val = pl.msd
@@ -180,7 +183,7 @@ export default function CalculatorPage() {
           const weightedMsd = totalWeeklyHours > 0 ? (schoolWeeklyHours / totalWeeklyHours) * val : val
           
           // Apply x2 multiplier if ALL schools have MSD >= 10 AND consecutive years condition is met
-          const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14 && hasConsecutiveHighMSD) ? 2 : 1
+          const msdMultiplier = (allSchoolsHaveHighMSD && hasConsecutiveHighMSD) ? 2 : 1
           const monthsFactor = 12 / 12 // Always 12 months for regular teachers
           points += weightedMsd * msdMultiplier * monthsFactor
         }
@@ -580,6 +583,16 @@ export default function CalculatorPage() {
                             msdPoints += partition
                           }
                         } else {
+                          // For regular teachers, calculate weighted MSD points based on weekly hours
+                          const totalWeeklyHours = y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
+                          
+                          // Check if there are at least 2 consecutive years with MSD 10-14
+                          const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(y)
+                          
+                          // Check if ALL schools in this year have MSD >= 10 (for x2 multiplier)
+                          const allSchoolsHaveHighMSD = y.placements.length > 0 && y.placements.every(p => p.msd >= 10 && p.msd <= 14)
+                          
+                          // Calculate weighted MSD points for each placement
                           for (const pl of y.placements) {
                             let val = pl.msd
                             const threshold = readNumber(dys, 'threshold') || 10
@@ -588,39 +601,43 @@ export default function CalculatorPage() {
                             const extra = readNumber(pris, 'extraMsd')
                             if (pl.isPrison && extra) val += extra
                             
-                            const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(y)
-                            const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14 && hasConsecutiveHighMSD) ? 2 : 1
-                            const monthsFactor = pl.months / 12
-                            msdPoints += val * msdMultiplier * monthsFactor
+                            // Calculate weighted MSD: (school weekly hours / total weekly hours) * MSD
+                            const schoolWeeklyHours = pl.weeklyHours || 0
+                            const weightedMsd = totalWeeklyHours > 0 ? (schoolWeeklyHours / totalWeeklyHours) * val : val
+                            
+                            // Apply x2 multiplier if ALL schools have MSD >= 10 AND consecutive years condition is met
+                            const msdMultiplier = (allSchoolsHaveHighMSD && hasConsecutiveHighMSD) ? 2 : 1
+                            const monthsFactor = 12 / 12 // Always 12 months for regular teachers
+                            msdPoints += weightedMsd * msdMultiplier * monthsFactor
                           }
                         }
                       }
                       
-                      // Calculate duration points
+                      // Calculate duration points for this year only (not total experience)
                       let durationPoints = 0
                       if (flows && selectedFlowId !== flows.find(f => f.slug === 'neodioristos')?.id) {
-                        let totalMonths = 0
+                        let yearMonths = 0
                         if (supportsSubstitute && y.isSubstitute) {
-                          totalMonths = y.substituteMonths
+                          yearMonths = y.substituteMonths
                         } else {
-                          totalMonths = y.placements.reduce((sum, p) => sum + p.months, 0)
+                          yearMonths = 12 // Always 12 months for regular teachers
                         }
                         
-                        const totalYears = totalMonths / 12
+                        const yearYears = yearMonths / 12
                         
                         if (selectedFlow?.slug === 'metathesi') {
-                          durationPoints = totalYears * 2.5
+                          durationPoints = yearYears * 2.5
                         } else if (selectedFlow?.slug === 'apospasi') {
-                          if (totalYears <= 10) {
-                            durationPoints = totalYears * 1
-                          } else if (totalYears <= 20) {
-                            durationPoints = totalYears * 1.5
+                          if (yearYears <= 10) {
+                            durationPoints = yearYears * 1
+                          } else if (yearYears <= 20) {
+                            durationPoints = yearYears * 1.5
                           } else {
-                            durationPoints = totalYears * 2
+                            durationPoints = yearYears * 2
                           }
                         } else {
                           const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
-                          durationPoints = perYearBase * totalYears
+                          durationPoints = perYearBase * yearYears
                         }
                       }
                       
