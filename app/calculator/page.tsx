@@ -160,7 +160,13 @@ export default function CalculatorPage() {
           points += partition
         }
       } else {
-        // For regular teachers, use the original calculation
+        // For regular teachers, calculate weighted MSD points based on weekly hours
+        const totalWeeklyHours = year.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
+        
+        // Check if there are at least 2 consecutive years with MSD 10-14
+        const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(year)
+        
+        // Calculate weighted MSD points for each placement
         for (const pl of year.placements) {
           let val = pl.msd
           const threshold = readNumber(dys, 'threshold') || 10
@@ -168,13 +174,15 @@ export default function CalculatorPage() {
           if (isDys && readBoolean(dys, 'doublesMsd')) val *= 2
           const extra = readNumber(pris, 'extraMsd')
           if (pl.isPrison && extra) val += extra
-          // Check if there are at least 2 consecutive years with MSD 10-14
-          const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(year)
           
-          // Double MSD points if MSD is 10-14 AND at least 2 consecutive years with high MSD
+          // Calculate weighted MSD: (school weekly hours / total weekly hours) * MSD
+          const schoolWeeklyHours = pl.weeklyHours || 0
+          const weightedMsd = totalWeeklyHours > 0 ? (schoolWeeklyHours / totalWeeklyHours) * val : val
+          
+          // Apply x2 multiplier if ALL schools have MSD >= 10 AND consecutive years condition is met
           const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14 && hasConsecutiveHighMSD) ? 2 : 1
           const monthsFactor = pl.months / 12
-          points += val * msdMultiplier * monthsFactor
+          points += weightedMsd * msdMultiplier * monthsFactor
         }
       }
     }
