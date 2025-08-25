@@ -574,8 +574,9 @@ export default function CalculatorPage() {
                               if (pl.isPrison && extra) val += extra
                               
                               const schoolWeeklyHours = pl.weeklyHours || 0
-                              // Substitute teachers do NOT get x2 MSD points for MSD 10-14
-                              const partition = (schoolWeeklyHours / totalWeeklyHours) * val * (y.substituteMonths / 12)
+                              // Substitute teachers DO get x2 MSD points for MSD 10-14 (even in single year)
+                              const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
+                              const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (y.substituteMonths / 12)
                               msdPoints += partition
                             }
                           } else {
