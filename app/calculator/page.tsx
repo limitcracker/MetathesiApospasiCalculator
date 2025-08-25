@@ -123,20 +123,9 @@ export default function CalculatorPage() {
     // Count how many μόνιμος years have high MSD (excluding the current year)
     let highMSDCount = 0
     
-    console.log(`\n=== DEBUG: Checking consecutive years for year ${year.year} ===`)
-    console.log(`Current year has high MSD: ${currentYearHasHighMSD}`)
-    console.log(`Total years in list: ${yearsList.length}`)
-    
     for (const checkYear of yearsList) {
-      console.log(`Checking year ${checkYear.year} (ID: ${checkYear.id}):`)
-      console.log(`  - Is current year: ${checkYear.id === year.id}`)
-      console.log(`  - Is substitute: ${checkYear.isSubstitute}`)
-      console.log(`  - Has placements: ${checkYear.placements.length > 0}`)
-      console.log(`  - All placements have MSD >= 10: ${checkYear.placements.every(p => p.msd >= 10)}`)
-      
       // Skip the current year and substitute years
       if (checkYear.id === year.id || checkYear.isSubstitute) {
-        console.log(`  - SKIPPING (current year or substitute)`)
         continue
       }
       
@@ -144,15 +133,8 @@ export default function CalculatorPage() {
       const hasHighMSD = checkYear.placements.length > 0 && checkYear.placements.every(p => p.msd >= 10)
       if (hasHighMSD) {
         highMSDCount++
-        console.log(`  - COUNTING (has high MSD)`)
-      } else {
-        console.log(`  - NOT COUNTING (no high MSD)`)
       }
     }
-    
-    console.log(`Final highMSDCount = ${highMSDCount}`)
-    console.log(`Function should return: ${highMSDCount >= 1}`)
-    console.log(`=== END DEBUG ===\n`)
     
     // Need at least 1 other μόνιμος year with high MSD (plus current year = 2 total)
     return highMSDCount >= 1
@@ -626,12 +608,7 @@ export default function CalculatorPage() {
                             // Check if ALL schools in this year have MSD >= 10 (for x2 multiplier)
                             const allSchoolsHaveHighMSD = y.placements.length > 0 && y.placements.every(p => p.msd >= 10)
                             
-                            // Debug: Log the conditions for this year
-                            console.log(`\n=== DISPLAY DEBUG for year ${y.year} ===`)
-                            console.log(`hasConsecutiveHighMSD = ${hasConsecutiveHighMSD}`)
-                            console.log(`allSchoolsHaveHighMSD = ${allSchoolsHaveHighMSD}`)
-                            console.log(`msdMultiplier will be: ${(allSchoolsHaveHighMSD && hasConsecutiveHighMSD) ? 2 : 1}`)
-                            console.log(`=== END DISPLAY DEBUG ===\n`)
+
                             
                             // Calculate weighted MSD points for each placement
                             for (const pl of y.placements) {
@@ -1080,6 +1057,16 @@ export default function CalculatorPage() {
                     totalMsdPoints += partition
                   }
                 } else {
+                  // For regular teachers, calculate weighted MSD points based on weekly hours
+                  const totalWeeklyHours = year.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
+                  
+                  // Check if there are at least 2 consecutive years with MSD 10-14
+                  const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(year)
+                  
+                  // Check if ALL schools in this year have MSD >= 10 (for x2 multiplier)
+                  const allSchoolsHaveHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10)
+                  
+                  // Calculate weighted MSD points for each placement
                   for (const pl of year.placements) {
                     let val = pl.msd
                     const threshold = readNumber(dys, 'threshold') || 10
@@ -1088,10 +1075,14 @@ export default function CalculatorPage() {
                     const extra = readNumber(pris, 'extraMsd')
                     if (pl.isPrison && extra) val += extra
                     
-                    const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(year)
-                    const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14 && hasConsecutiveHighMSD) ? 2 : 1
-                    const monthsFactor = pl.months / 12
-                    totalMsdPoints += val * msdMultiplier * monthsFactor
+                    // Calculate weighted MSD: (school weekly hours / total weekly hours) * MSD
+                    const schoolWeeklyHours = pl.weeklyHours || 0
+                    const weightedMsd = totalWeeklyHours > 0 ? (schoolWeeklyHours / totalWeeklyHours) * val : val
+                    
+                    // Apply x2 multiplier if ALL schools have MSD >= 10 AND consecutive years condition is met
+                    const msdMultiplier = (allSchoolsHaveHighMSD && hasConsecutiveHighMSD) ? 2 : 1
+                    const monthsFactor = 12 / 12 // Always 12 months for regular teachers
+                    totalMsdPoints += weightedMsd * msdMultiplier * monthsFactor
                   }
                 }
               }
