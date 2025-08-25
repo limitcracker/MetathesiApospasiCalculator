@@ -106,36 +106,36 @@ export default function CalculatorPage() {
     const currentYearHasHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10)
     if (!currentYearHasHighMSD) return false
     
-    // Count consecutive μόνιμος years with high MSD (including current year)
-    let consecutiveCount = 0
+    // Find the longest consecutive sequence of μόνιμος years with high MSD that includes the current year
+    let maxConsecutiveCount = 0
     
-    // Check backwards from current year
-    for (let i = currentYearIndex; i >= 0; i--) {
-      const checkYear = yearsList[i]
-      if (checkYear.isSubstitute) break // Stop if we hit a substitute year
+    // Try different starting points to find the longest consecutive sequence
+    for (let startIdx = 0; startIdx < yearsList.length; startIdx++) {
+      let consecutiveCount = 0
+      let includesCurrentYear = false
       
-      const hasHighMSD = checkYear.placements.length > 0 && checkYear.placements.every(p => p.msd >= 10)
-      if (hasHighMSD) {
-        consecutiveCount++
-      } else {
-        break // Stop counting if we find a year without high MSD
+      for (let i = startIdx; i < yearsList.length; i++) {
+        const checkYear = yearsList[i]
+        if (checkYear.isSubstitute) break // Stop if we hit a substitute year
+        
+        const hasHighMSD = checkYear.placements.length > 0 && checkYear.placements.every(p => p.msd >= 10)
+        if (hasHighMSD) {
+          consecutiveCount++
+          if (i === currentYearIndex) {
+            includesCurrentYear = true
+          }
+        } else {
+          break // Stop counting if we find a year without high MSD
+        }
+      }
+      
+      // Only consider sequences that include the current year
+      if (includesCurrentYear && consecutiveCount > maxConsecutiveCount) {
+        maxConsecutiveCount = consecutiveCount
       }
     }
     
-    // Check forwards from current year
-    for (let i = currentYearIndex + 1; i < yearsList.length; i++) {
-      const checkYear = yearsList[i]
-      if (checkYear.isSubstitute) break // Stop if we hit a substitute year
-      
-      const hasHighMSD = checkYear.placements.length > 0 && checkYear.placements.every(p => p.msd >= 10)
-      if (hasHighMSD) {
-        consecutiveCount++
-      } else {
-        break // Stop counting if we find a year without high MSD
-      }
-    }
-    
-    return consecutiveCount >= 2
+    return maxConsecutiveCount >= 2
   }
 
   // Function to calculate points for a single year
@@ -654,7 +654,7 @@ export default function CalculatorPage() {
                         }
                         
                         const totalYearPoints = msdPoints + durationPoints
-                        return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
+                        return `${totalYearPoints.toFixed(2)} μόρια = ${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ`
                       })()})
                     </span>
                   </div>
