@@ -1077,6 +1077,7 @@ export default function CalculatorPage() {
                   <li>• Εξαγωγή σε PDF</li>
                   <li>• Αυτόματη αναζήτηση Σχολείου → ΜΣΔ</li>
                   <li>• Ωρομίσθιοι</li>
+                  <li>• Καλύτερο Web Mobile UI/UX</li>
                 </ul>
               </div>
               
