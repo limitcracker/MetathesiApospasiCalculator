@@ -94,7 +94,7 @@ export default function CalculatorPage() {
   const enabledKeys = useMemo(() => new Set<string>(selectedFlow?.flowCriteria?.map((fc) => fc.criterion.key) ?? []), [selectedFlow])
   const supportsSubstitute = useMemo(() => selectedFlow?.slug === 'metathesi' || selectedFlow?.slug === 'apospasi', [selectedFlow])
 
-  // Function to check if there are at least 2 consecutive years with MSD 10-14 (for μόνιμος teachers only)
+  // Function to check if there are at least 2 consecutive years with MSD >= 10 (for μόνιμος teachers only)
   const hasConsecutiveYearsWithHighMSD = (year: typeof yearsList[0]): boolean => {
     const currentYearIndex = yearsList.findIndex(y => y.id === year.id)
     if (currentYearIndex === -1) return false
@@ -103,28 +103,39 @@ export default function CalculatorPage() {
     if (year.isSubstitute) return false
     
     // Check if current year has high MSD (ALL placements must have MSD >= 10)
-    const currentYearHasHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10 && p.msd <= 14)
+    const currentYearHasHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10)
     if (!currentYearHasHighMSD) return false
     
-    // Check previous year (must also be μόνιμος)
-    if (currentYearIndex > 0) {
-      const prevYear = yearsList[currentYearIndex - 1]
-      if (!prevYear.isSubstitute) { // Only check if previous year is also μόνιμος
-        const prevYearHasHighMSD = prevYear.placements.length > 0 && prevYear.placements.every(p => p.msd >= 10 && p.msd <= 14)
-        if (prevYearHasHighMSD) return true
+    // Count consecutive μόνιμος years with high MSD (including current year)
+    let consecutiveCount = 0
+    
+    // Check backwards from current year
+    for (let i = currentYearIndex; i >= 0; i--) {
+      const checkYear = yearsList[i]
+      if (checkYear.isSubstitute) break // Stop if we hit a substitute year
+      
+      const hasHighMSD = checkYear.placements.length > 0 && checkYear.placements.every(p => p.msd >= 10)
+      if (hasHighMSD) {
+        consecutiveCount++
+      } else {
+        break // Stop counting if we find a year without high MSD
       }
     }
     
-    // Check next year (must also be μόνιμος)
-    if (currentYearIndex < yearsList.length - 1) {
-      const nextYear = yearsList[currentYearIndex + 1]
-      if (!nextYear.isSubstitute) { // Only check if next year is also μόνιμος
-        const nextYearHasHighMSD = nextYear.placements.length > 0 && nextYear.placements.every(p => p.msd >= 10 && p.msd <= 14)
-        if (nextYearHasHighMSD) return true
+    // Check forwards from current year
+    for (let i = currentYearIndex + 1; i < yearsList.length; i++) {
+      const checkYear = yearsList[i]
+      if (checkYear.isSubstitute) break // Stop if we hit a substitute year
+      
+      const hasHighMSD = checkYear.placements.length > 0 && checkYear.placements.every(p => p.msd >= 10)
+      if (hasHighMSD) {
+        consecutiveCount++
+      } else {
+        break // Stop counting if we find a year without high MSD
       }
     }
     
-    return false
+    return consecutiveCount >= 2
   }
 
   // Function to calculate points for a single year
@@ -167,7 +178,7 @@ export default function CalculatorPage() {
         const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(year)
         
         // Check if ALL schools in this year have MSD >= 10 (for x2 multiplier)
-        const allSchoolsHaveHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10 && p.msd <= 14)
+        const allSchoolsHaveHighMSD = year.placements.length > 0 && year.placements.every(p => p.msd >= 10)
         
         // Calculate weighted MSD points for each placement
         for (const pl of year.placements) {
@@ -425,7 +436,8 @@ export default function CalculatorPage() {
                   type="number" 
                   min={0} 
                   value={childrenCount} 
-                  onChange={(e) => setChildrenCount(parseInt(e.target.value) || 0)} 
+                  onChange={(e) => setChildrenCount(parseInt(e.target.value) || 0)}
+                  onFocus={(e) => e.target.select()}
                   className="border border-gray-300 rounded-lg p-2 w-full sm:w-20 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </label>
@@ -578,9 +590,8 @@ export default function CalculatorPage() {
                               if (pl.isPrison && extra) val += extra
                               
                               const schoolWeeklyHours = pl.weeklyHours || 0
-                              // For substitute teachers, no consecutive year requirement for MSD 10-14
-                              const msdMultiplier = (pl.msd >= 10 && pl.msd <= 14) ? 2 : 1
-                              const partition = (schoolWeeklyHours / totalWeeklyHours) * val * msdMultiplier * (y.substituteMonths / 12)
+                              // Substitute teachers do NOT get x2 MSD points for MSD 10-14
+                              const partition = (schoolWeeklyHours / totalWeeklyHours) * val * (y.substituteMonths / 12)
                               msdPoints += partition
                             }
                           } else {
@@ -591,7 +602,7 @@ export default function CalculatorPage() {
                             const hasConsecutiveHighMSD = hasConsecutiveYearsWithHighMSD(y)
                             
                             // Check if ALL schools in this year have MSD >= 10 (for x2 multiplier)
-                            const allSchoolsHaveHighMSD = y.placements.length > 0 && y.placements.every(p => p.msd >= 10 && p.msd <= 14)
+                            const allSchoolsHaveHighMSD = y.placements.length > 0 && y.placements.every(p => p.msd >= 10)
                             
                             // Calculate weighted MSD points for each placement
                             for (const pl of y.placements) {
@@ -621,7 +632,7 @@ export default function CalculatorPage() {
                           if (supportsSubstitute && y.isSubstitute) {
                             yearMonths = y.substituteMonths
                           } else {
-                            yearMonths = 12 // Always 12 months for regular teachers
+                            yearMonths = y.placements.reduce((sum, p) => sum + p.months, 0) // Sum all placement months
                           }
                           
                           const yearYears = yearMonths / 12
@@ -642,7 +653,8 @@ export default function CalculatorPage() {
                           }
                         }
                         
-                        return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ`
+                        const totalYearPoints = msdPoints + durationPoints
+                        return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
                       })()})
                     </span>
                   </div>
@@ -808,7 +820,8 @@ export default function CalculatorPage() {
                         onChange={(e) => {
                           const newTotalHours = parseInt(e.target.value) || 0
                           setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, totalWeeklyHours: newTotalHours } : it)))
-                        }} 
+                        }}
+                        onFocus={(e) => e.target.select()}
                         className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                       />
                     </label>
@@ -823,7 +836,8 @@ export default function CalculatorPage() {
                         min={0} 
                         max={10} 
                         value={y.substituteMonths} 
-                        onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, substituteMonths: parseInt(e.target.value) || 0 } : it)))} 
+                        onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, substituteMonths: parseInt(e.target.value) || 0 } : it)))}
+                        onFocus={(e) => e.target.select()}
                         className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                       />
                     </label>
@@ -925,7 +939,8 @@ export default function CalculatorPage() {
                                  type="number" 
                                  min={0} 
                                  value={p.weeklyHours ?? 0} 
-                                 onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, weeklyHours: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
+                                 onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, weeklyHours: parseInt(e.target.value) || 0 } : pp)) } : it)))}
+                                 onFocus={(e) => e.target.select()}
                                  className="border border-gray-300 rounded-lg p-2 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                                />
                              </label>
@@ -938,7 +953,8 @@ export default function CalculatorPage() {
                                min={1} 
                                max={14} 
                                value={p.msd} 
-                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))} 
+                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))}
+                               onFocus={(e) => e.target.select()}
                                className="border border-gray-300 rounded-lg p-2 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                              />
                            </label>
