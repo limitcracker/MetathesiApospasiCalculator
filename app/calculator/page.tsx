@@ -1078,6 +1078,7 @@ export default function CalculatorPage() {
                   <li>• Αυτόματη αναζήτηση Σχολείου → ΜΣΔ</li>
                   <li>• Ωρομίσθιοι</li>
                   <li>• Καλύτερο Web Mobile UI/UX</li>
+                  <li>• Εισαγωγή στοιχείων από το teachers.minedu.gov.gr</li>
                 </ul>
               </div>
               
