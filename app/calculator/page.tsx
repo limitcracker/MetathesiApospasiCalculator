@@ -491,7 +491,7 @@ export default function CalculatorPage() {
                   onChange={(e) => setHasSynypiretisi(e.target.checked)}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <span className="font-medium text-gray-900">Συνυπηρέτηση</span>
+                <span className="font-medium text-gray-900">Συνυπηρέτηση <span className="text-gray-500 text-sm">(στην περιοχή)</span></span>
               </label>
             )}
             {enabledKeys.has('entopiotita') && (
@@ -524,7 +524,7 @@ export default function CalculatorPage() {
                   onChange={(e) => setHasIvf(e.target.checked)}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <span className="font-medium text-gray-900">Εξωσωματική</span>
+                <span className="font-medium text-gray-900">Εξωσωματική <span className="text-gray-500 text-sm">(στην περιοχή)</span></span>
               </label>
             )}
             {enabledKeys.has('firstPreference') && (
