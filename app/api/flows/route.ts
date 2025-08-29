@@ -37,9 +37,9 @@ const staticFlows = [
     flowCriteria: [
       { criterion: { key: 'marriage', label: 'Γάμος / Σύμφωνο συμβίωσης / Χηρεία' }, config: { points: 4 } },
       { criterion: { key: 'children', label: 'Τέκνα' }, config: { first: 5, second: 6, third: 8, fourthPlus: 10 } },
-      { criterion: { key: 'synypiretisi', label: 'Συνυπηρέτηση' }, config: { points: 4 } },
+      { criterion: { key: 'synypiretisi', label: 'Συνυπηρέτηση' }, config: { points: 10 } },
       { criterion: { key: 'entopiotita', label: 'Εντοπιότητα' }, config: { points: 2 } },
-      { criterion: { key: 'proypiresia', label: 'Προϋπηρεσία (έτη)' }, config: { perYear: 2 } },
+      { criterion: { key: 'proypiresia', label: 'Προϋπηρεσία (έτη)' }, config: { perYear: 1, tier1: 10, tier2: 20, multiplier1: 1, multiplier2: 1.5, multiplier3: 2 } },
       { criterion: { key: 'studies', label: 'Σπουδές' }, config: { points: 2 } },
       { criterion: { key: 'ivf', label: 'Εξωσωματική' }, config: { points: 3 } },
     ]

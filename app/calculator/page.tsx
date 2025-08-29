@@ -185,11 +185,11 @@ export default function CalculatorPage() {
     let points = 0
     const getCfg = (k: string): unknown => configByKey.get(k)
     
-    // Calculate MSD points for this year only
+    // Calculate MSD points for this year only (only for flows that support MSD)
     const dys = getCfg('dysprosita')
     const pris = getCfg('prisons')
     const msd = getCfg('msd')
-    if (msd) {
+    if (msd && selectedFlow?.slug !== 'apospasi') {
       if (supportsSubstitute && year.isSubstitute) {
         // For substitute teachers, calculate partition based on weekly hours
         const totalWeeklyHours = year.totalWeeklyHours
@@ -280,15 +280,21 @@ export default function CalculatorPage() {
           points += totalYears * 2.5
         } else if (selectedFlow?.slug === 'apospasi') {
           // Ροή 3: different multipliers based on years
-          if (totalYears <= 10) {
+          const tier1 = readNumber(getCfg('proypiresia'), 'tier1') || 10
+          const tier2 = readNumber(getCfg('proypiresia'), 'tier2') || 20
+          const multiplier1 = readNumber(getCfg('proypiresia'), 'multiplier1') || 1
+          const multiplier2 = readNumber(getCfg('proypiresia'), 'multiplier2') || 1.5
+          const multiplier3 = readNumber(getCfg('proypiresia'), 'multiplier3') || 2
+          
+          if (totalYears <= tier1) {
             // Years 1-10: multiplier = 1
-            points += totalYears * 1
-          } else if (totalYears <= 20) {
+            points += totalYears * multiplier1
+          } else if (totalYears <= tier2) {
             // Years 11-20: multiplier = 1.5
-            points += totalYears * 1.5
+            points += totalYears * multiplier2
           } else {
-            // Years 20+: multiplier = 2
-            points += totalYears * 2
+            // Years 21+: multiplier = 2
+            points += totalYears * multiplier3
           }
         } else {
           // Default calculation for other flows
@@ -613,7 +619,7 @@ export default function CalculatorPage() {
                         const dys = getCfg('dysprosita')
                         const pris = getCfg('prisons')
                         const msd = getCfg('msd')
-                        if (msd) {
+                        if (msd && selectedFlow?.slug !== 'apospasi') {
                           if (supportsSubstitute && y.isSubstitute) {
                             const totalWeeklyHours = y.totalWeeklyHours
                             for (const pl of y.placements) {
@@ -673,12 +679,18 @@ export default function CalculatorPage() {
                           if (selectedFlow?.slug === 'metathesi') {
                             durationPoints = yearYears * 2.5
                           } else if (selectedFlow?.slug === 'apospasi') {
-                            if (yearYears <= 10) {
-                              durationPoints = yearYears * 1
-                            } else if (yearYears <= 20) {
-                              durationPoints = yearYears * 1.5
+                            const tier1 = readNumber(getCfg('proypiresia'), 'tier1') || 10
+                            const tier2 = readNumber(getCfg('proypiresia'), 'tier2') || 20
+                            const multiplier1 = readNumber(getCfg('proypiresia'), 'multiplier1') || 1
+                            const multiplier2 = readNumber(getCfg('proypiresia'), 'multiplier2') || 1.5
+                            const multiplier3 = readNumber(getCfg('proypiresia'), 'multiplier3') || 2
+                            
+                            if (yearYears <= tier1) {
+                              durationPoints = yearYears * multiplier1
+                            } else if (yearYears <= tier2) {
+                              durationPoints = yearYears * multiplier2
                             } else {
-                              durationPoints = yearYears * 2
+                              durationPoints = yearYears * multiplier3
                             }
                           } else {
                             const perYearBase = readNumber(getCfg('proypiresia'), 'perYear')
@@ -687,7 +699,11 @@ export default function CalculatorPage() {
                         }
                         
                         const totalYearPoints = msdPoints + durationPoints
-                        return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
+                        if (selectedFlow?.slug === 'apospasi') {
+                          return `${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
+                        } else {
+                          return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
+                        }
                       })()})
                     </span>
                   </div>
@@ -916,7 +932,7 @@ export default function CalculatorPage() {
                    </div>
                    
                    {/* No Schools Warning */}
-                   {y.placements.length === 0 && (
+                   {y.placements.length === 0 && selectedFlow?.slug !== 'apospasi' && (
                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                        <div className="flex items-center gap-2">
                          <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
@@ -979,28 +995,32 @@ export default function CalculatorPage() {
                              </label>
                            )}
                            
-                           <label className="flex flex-col gap-1">
-                             <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
-                             <input 
-                               type="number" 
-                               min={1} 
-                               max={14} 
-                               value={p.msd} 
-                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))}
-                               onFocus={(e) => e.target.select()}
-                               className="border border-gray-300 rounded-lg p-2 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
-                             />
-                           </label>
+                           {selectedFlow?.slug !== 'apospasi' && (
+                             <label className="flex flex-col gap-1">
+                               <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
+                               <input 
+                                 type="number" 
+                                 min={1} 
+                                 max={14} 
+                                 value={p.msd} 
+                                 onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))}
+                                 onFocus={(e) => e.target.select()}
+                                 className="border border-gray-300 rounded-lg p-2 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                               />
+                             </label>
+                           )}
                            
-                           <label className="flex items-center gap-2">
-                             <input 
-                               type="checkbox" 
-                               checked={p.isPrison} 
-                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, isPrison: e.target.checked } : pp)) } : it)))}
-                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                             />
-                             <span className="text-sm font-medium text-gray-700">Φυλακή</span>
-                           </label>
+                           {selectedFlow?.slug !== 'apospasi' && (
+                             <label className="flex items-center gap-2">
+                               <input 
+                                 type="checkbox" 
+                                 checked={p.isPrison} 
+                                 onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, isPrison: e.target.checked } : pp)) } : it)))}
+                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                               />
+                               <span className="text-sm font-medium text-gray-700">Φυλακή</span>
+                             </label>
+                           )}
                            
                            <button 
                              type="button" 
@@ -1018,7 +1038,7 @@ export default function CalculatorPage() {
                                }
                              }}
                              disabled={y.placements.length === 1}
-                             title={y.placements.length === 1 ? "Απαιτείται τουλάχιστον ένα σχολείο" : "Διαγραφή σχολείου"}
+                             title={y.placements.length === 1 ? (selectedFlow?.slug === 'apospasi' ? "Απαιτείται τουλάχιστον ένα σχολείο" : "Απαιτείται τουλάχιστον ένα σχολείο για τον υπολογισμό των ΜΣΔ μορίων") : "Διαγραφή σχολείου"}
                            >
                              Διαγραφή
                            </button>
@@ -1066,7 +1086,7 @@ export default function CalculatorPage() {
               const dys = getCfg('dysprosita')
               const pris = getCfg('prisons')
               const msd = getCfg('msd')
-              if (msd) {
+              if (msd && selectedFlow?.slug !== 'apospasi') {
                 if (supportsSubstitute && year.isSubstitute) {
                   const totalWeeklyHours = year.totalWeeklyHours
                   for (const pl of year.placements) {
@@ -1129,12 +1149,23 @@ export default function CalculatorPage() {
               if (selectedFlow && selectedFlow.slug === 'metathesi') {
                 totalDurationPoints = totalYears * 2.5
               } else if (selectedFlow && selectedFlow.slug === 'apospasi') {
-                if (totalYears <= 10) {
-                  totalDurationPoints = totalYears * 1
-                } else if (totalYears <= 20) {
-                  totalDurationPoints = totalYears * 1.5
+                const configByKey = new Map<string, unknown>()
+                for (const fc of selectedFlow.flowCriteria) {
+                  configByKey.set(fc.criterion.key, fc.config)
+                }
+                const getCfg = (k: string): unknown => configByKey.get(k)
+                const tier1 = readNumber(getCfg('proypiresia'), 'tier1') || 10
+                const tier2 = readNumber(getCfg('proypiresia'), 'tier2') || 20
+                const multiplier1 = readNumber(getCfg('proypiresia'), 'multiplier1') || 1
+                const multiplier2 = readNumber(getCfg('proypiresia'), 'multiplier2') || 1.5
+                const multiplier3 = readNumber(getCfg('proypiresia'), 'multiplier3') || 2
+                
+                if (totalYears <= tier1) {
+                  totalDurationPoints = totalYears * multiplier1
+                } else if (totalYears <= tier2) {
+                  totalDurationPoints = totalYears * multiplier2
                 } else {
-                  totalDurationPoints = totalYears * 2
+                  totalDurationPoints = totalYears * multiplier3
                 }
               } else {
                 const configByKey = new Map<string, unknown>()
@@ -1147,7 +1178,11 @@ export default function CalculatorPage() {
               }
             }
             
-            return `= ${totalMsdPoints.toFixed(2)} ΜΣΔ + ${totalDurationPoints.toFixed(2)} ΠΡΟΫΠ`
+            if (selectedFlow?.slug === 'apospasi') {
+              return `= ${totalDurationPoints.toFixed(2)} ΠΡΟΫΠ`
+            } else {
+              return `= ${totalMsdPoints.toFixed(2)} ΜΣΔ + ${totalDurationPoints.toFixed(2)} ΠΡΟΫΠ`
+            }
           })()}
         </div>
       </div>
