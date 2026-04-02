@@ -26,7 +26,6 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json())
 export default function CalculatorPage() {
   const { data: flows, error, isLoading } = useSWR<FlowSummary[]>("/api/flows", fetcher)
   const [selectedFlowId, setSelectedFlowId] = useState<string>('')
-  const [isOpen, setIsOpen] = useState(false)
   
   // Basic state for the calculator
   const [yearsList, setYearsList] = useState<Array<{
@@ -81,35 +80,11 @@ export default function CalculatorPage() {
     )
   }, [])
 
-  // Close dropdown when clicking outside or pressing Escape
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element
-      if (!target.closest('.dropdown-container')) {
-        setIsOpen(false)
-      }
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false)
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-      document.addEventListener('keydown', handleKeyDown)
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside)
-        document.removeEventListener('keydown', handleKeyDown)
-      }
-    }
-  }, [isOpen])
-
   // Computed values
   const selectedFlow = useMemo(() => flows?.find((f) => f.id === selectedFlowId), [flows, selectedFlowId])
   const enabledKeys = useMemo(() => new Set<string>(selectedFlow?.flowCriteria?.map((fc) => fc.criterion.key) ?? []), [selectedFlow])
-  const supportsSubstitute = useMemo(() => selectedFlow?.slug === 'metathesi' || selectedFlow?.slug === 'apospasi', [selectedFlow])
+  const flowHasMsd = enabledKeys.has('msd')
+  const supportsSubstitute = useMemo(() => selectedFlow?.slug === 'metathesi', [selectedFlow])
 
   // Function to check if this year should get x2 MSD multiplier (for μόνιμος teachers only)
   // The x2 multiplier only applies to the FIRST 2 consecutive years with MSD >= 10
@@ -189,7 +164,7 @@ export default function CalculatorPage() {
     const dys = getCfg('dysprosita')
     const pris = getCfg('prisons')
     const msd = getCfg('msd')
-    if (msd) {
+    if (flowHasMsd && msd) {
       if (supportsSubstitute && year.isSubstitute) {
         // For substitute teachers, calculate partition based on weekly hours
         const totalWeeklyHours = year.totalWeeklyHours
@@ -381,44 +356,38 @@ export default function CalculatorPage() {
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <label className="flex flex-col gap-2 flex-1">
-            <span className="text-sm font-semibold text-blue-900">Επιλογή Ροής</span>
-            <div className="relative dropdown-container">
-              <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                disabled={isLoading}
-                className="w-full border border-blue-300 rounded-lg p-3 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 text-left flex justify-between items-center"
+          <div className="flex flex-col gap-2 flex-1">
+            <span className="text-sm font-semibold text-blue-900" id="flow-select-label">
+              Επιλογή Ροής
+            </span>
+            <div className="relative">
+              <select
+                id="flow-select"
+                aria-labelledby="flow-select-label"
+                className="w-full border border-blue-300 rounded-lg py-3 pl-3 pr-10 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 appearance-none cursor-pointer text-left"
+                value={selectedFlowId || (flows?.[0]?.id ?? '')}
+                onChange={(e) => setSelectedFlowId(e.target.value)}
+                disabled={isLoading || !!error || !flows?.length}
               >
-                <span>
-                  {isLoading ? 'Φόρτωση...' : 
-                   error ? 'Σφάλμα φόρτωσης' :
-                   flows?.find(f => f.id === selectedFlowId)?.name || 'Επιλέξτε ροή'}
-                </span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              
-              {isOpen && flows && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto dropdown-container">
-                  {flows.map((f) => (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedFlowId(f.id)
-                        setIsOpen(false)
-                      }}
-                      className="w-full px-3 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none text-gray-900"
-                    >
-                      {f.name}
-                    </button>
-                  ))}
-                </div>
-              )}
+                {isLoading && <option value="">Φόρτωση...</option>}
+                {!isLoading && error && <option value="">Σφάλμα φόρτωσης</option>}
+                {!isLoading && !error && flows?.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+              <svg
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
-          </label>
+          </div>
           
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <button
@@ -568,11 +537,11 @@ export default function CalculatorPage() {
               className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
                                      onClick={() => {
                          const nextId = Math.random().toString(36).slice(2)
-                         let nextYear = (yearsList[yearsList.length - 1]?.year || new Date().getFullYear()) + 1
+                         let nextYear = (yearsList[yearsList.length - 1]?.year || new Date().getFullYear()) - 1
                          
-                         // Find the next available year
-                         while (yearsList.some(y => y.year === nextYear)) {
-                           nextYear++
+                         // Find the next available year (default: one calendar year lower; user can edit freely)
+                         while (yearsList.some((y) => y.year === nextYear)) {
+                           nextYear--
                          }
                          
                          const next = {
@@ -613,7 +582,7 @@ export default function CalculatorPage() {
                         const dys = getCfg('dysprosita')
                         const pris = getCfg('prisons')
                         const msd = getCfg('msd')
-                        if (msd) {
+                        if (flowHasMsd && msd) {
                           if (supportsSubstitute && y.isSubstitute) {
                             const totalWeeklyHours = y.totalWeeklyHours
                             for (const pl of y.placements) {
@@ -687,6 +656,9 @@ export default function CalculatorPage() {
                         }
                         
                         const totalYearPoints = msdPoints + durationPoints
+                        if (!flowHasMsd) {
+                          return `${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
+                        }
                         return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
                       })()})
                     </span>
@@ -695,10 +667,14 @@ export default function CalculatorPage() {
                     <button
                       type="button"
                       onClick={() => {
+                        let dupYear = y.year - 1
+                        while (yearsList.some((row) => row.year === dupYear)) {
+                          dupYear--
+                        }
                         const newYear = {
                           ...y,
                           id: Math.random().toString(36).slice(2),
-                          year: y.year + 1,
+                          year: dupYear,
                           placements: y.placements.map(p => ({ ...p, schoolName: '' }))
                         }
                         setYearsList((arr) => {
@@ -842,8 +818,8 @@ export default function CalculatorPage() {
                     </label>
                   )}
                   
-                  {/* Total Weekly Hours - Show for substitute OR for regular teachers with multiple schools */}
-                  {(supportsSubstitute && y.isSubstitute) || (!y.isSubstitute && y.placements.length > 1) ? (
+                  {/* Total Weekly Hours - Show for substitute OR for regular teachers with multiple schools (Απόσπαση: μόνο πολλαπλά σχολεία) */}
+                  {(supportsSubstitute && y.isSubstitute) || (!y.isSubstitute && y.placements.length > 1) || (selectedFlow?.slug === 'apospasi' && y.placements.length > 1) ? (
                     <label className="flex flex-col gap-1">
                       <span className="text-sm font-medium text-gray-700">Συνολικές ώρες</span>
                       <input 
@@ -876,8 +852,8 @@ export default function CalculatorPage() {
                     </label>
                   )}
                   
-                  {/* Months display for regular teachers (fixed at 12) */}
-                  {!y.isSubstitute && (
+                  {/* Months display for regular teachers (fixed at 12) — not shown for Απόσπαση */}
+                  {selectedFlow?.slug !== 'apospasi' && !y.isSubstitute && (
                     <label className="flex flex-col gap-1">
                       <span className="text-sm font-medium text-gray-700">Μήνες</span>
                       <div className="border border-gray-300 rounded-lg p-2 text-gray-900 font-medium bg-gray-50 w-full">
@@ -905,7 +881,7 @@ export default function CalculatorPage() {
                              months: 12, 
                              msd: 1, 
                              isPrison: false, 
-                             weeklyHours: (y.isSubstitute || y.placements.length > 0) ? (y.placements.length === 0 ? y.totalWeeklyHours : Math.max(0, remainingHours)) : 0 
+                             weeklyHours: ((supportsSubstitute && y.isSubstitute) || y.placements.length > 0) ? (y.placements.length === 0 ? y.totalWeeklyHours : Math.max(0, remainingHours)) : 0 
                            }] 
                          } : it)))
                        }}
@@ -923,14 +899,16 @@ export default function CalculatorPage() {
                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                          </svg>
                          <span className="text-sm font-medium text-red-800">
-                           Προσοχή: Απαιτείται τουλάχιστον ένα σχολείο για τον υπολογισμό των ΜΣΔ μορίων
+                           {flowHasMsd
+                             ? 'Προσοχή: Απαιτείται τουλάχιστον ένα σχολείο για τον υπολογισμό των ΜΣΔ μορίων'
+                             : 'Προσοχή: Απαιτείται τουλάχιστον ένα σχολείο για τον υπολογισμό της προϋπηρεσίας'}
                          </span>
                        </div>
                      </div>
                    )}
                    
                    {/* Weekly Hours Validation Warning */}
-                   {(y.isSubstitute || (!y.isSubstitute && y.placements.length > 1)) && y.placements.length > 0 && (() => {
+                   {((supportsSubstitute && y.isSubstitute) || (!y.isSubstitute && y.placements.length > 1) || (selectedFlow?.slug === 'apospasi' && y.placements.length > 1)) && y.placements.length > 0 && (() => {
                      const totalSchoolHours = y.placements.reduce((sum, p) => sum + (p.weeklyHours || 0), 0)
                      const difference = y.totalWeeklyHours - totalSchoolHours
                      if (Math.abs(difference) > 0.1) {
@@ -965,7 +943,7 @@ export default function CalculatorPage() {
                          </div>
                          
                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 w-full">
-                           {(y.isSubstitute || (!y.isSubstitute && y.placements.length > 1)) && (
+                           {((supportsSubstitute && y.isSubstitute) || (!y.isSubstitute && y.placements.length > 1) || (selectedFlow?.slug === 'apospasi' && y.placements.length > 1)) && (
                              <label className="flex flex-col gap-1">
                                <span className="text-sm font-medium text-gray-700">Ώρες/εβδ.</span>
                                <input 
@@ -979,28 +957,32 @@ export default function CalculatorPage() {
                              </label>
                            )}
                            
-                           <label className="flex flex-col gap-1">
-                             <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
-                             <input 
-                               type="number" 
-                               min={1} 
-                               max={14} 
-                               value={p.msd} 
-                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))}
-                               onFocus={(e) => e.target.select()}
-                               className="border border-gray-300 rounded-lg p-2 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
-                             />
-                           </label>
-                           
-                           <label className="flex items-center gap-2">
-                             <input 
-                               type="checkbox" 
-                               checked={p.isPrison} 
-                               onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, isPrison: e.target.checked } : pp)) } : it)))}
-                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                             />
-                             <span className="text-sm font-medium text-gray-700">Φυλακή</span>
-                           </label>
+                           {flowHasMsd && (
+                             <>
+                               <label className="flex flex-col gap-1">
+                                 <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
+                                 <input 
+                                   type="number" 
+                                   min={1} 
+                                   max={14} 
+                                   value={p.msd} 
+                                   onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))}
+                                   onFocus={(e) => e.target.select()}
+                                   className="border border-gray-300 rounded-lg p-2 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                                 />
+                               </label>
+                               
+                               <label className="flex items-center gap-2">
+                                 <input 
+                                   type="checkbox" 
+                                   checked={p.isPrison} 
+                                   onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, isPrison: e.target.checked } : pp)) } : it)))}
+                                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                 />
+                                 <span className="text-sm font-medium text-gray-700">Φυλακή</span>
+                               </label>
+                             </>
+                           )}
                            
                            <button 
                              type="button" 
@@ -1028,7 +1010,7 @@ export default function CalculatorPage() {
                    </div>
                    
                    {/* Weekly Hours Summary */}
-                   {(y.isSubstitute || (!y.isSubstitute && y.placements.length > 1)) && (
+                   {((supportsSubstitute && y.isSubstitute) || (!y.isSubstitute && y.placements.length > 1) || (selectedFlow?.slug === 'apospasi' && y.placements.length > 1)) && (
                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-sm">
                          <span className="font-medium text-gray-700">Σύνολο ωρών σχολείων:</span>
@@ -1066,7 +1048,7 @@ export default function CalculatorPage() {
               const dys = getCfg('dysprosita')
               const pris = getCfg('prisons')
               const msd = getCfg('msd')
-              if (msd) {
+              if (flowHasMsd && msd) {
                 if (supportsSubstitute && year.isSubstitute) {
                   const totalWeeklyHours = year.totalWeeklyHours
                   for (const pl of year.placements) {
@@ -1147,6 +1129,9 @@ export default function CalculatorPage() {
               }
             }
             
+            if (!flowHasMsd) {
+              return `= ${totalDurationPoints.toFixed(2)} ΠΡΟΫΠ`
+            }
             return `= ${totalMsdPoints.toFixed(2)} ΜΣΔ + ${totalDurationPoints.toFixed(2)} ΠΡΟΫΠ`
           })()}
         </div>
