@@ -164,11 +164,7 @@ export default function CalculatorPage() {
     const dys = getCfg('dysprosita')
     const pris = getCfg('prisons')
     const msd = getCfg('msd')
-<<<<<<< HEAD
     if (flowHasMsd && msd) {
-=======
-    if (msd && selectedFlow?.slug !== 'apospasi') {
->>>>>>> ba001812cc450e13363c8cb841409655c5edcf54
       if (supportsSubstitute && year.isSubstitute) {
         // For substitute teachers, calculate partition based on weekly hours
         const totalWeeklyHours = year.totalWeeklyHours
@@ -592,11 +588,7 @@ export default function CalculatorPage() {
                         const dys = getCfg('dysprosita')
                         const pris = getCfg('prisons')
                         const msd = getCfg('msd')
-<<<<<<< HEAD
                         if (flowHasMsd && msd) {
-=======
-                        if (msd && selectedFlow?.slug !== 'apospasi') {
->>>>>>> ba001812cc450e13363c8cb841409655c5edcf54
                           if (supportsSubstitute && y.isSubstitute) {
                             const totalWeeklyHours = y.totalWeeklyHours
                             for (const pl of y.placements) {
@@ -676,18 +668,10 @@ export default function CalculatorPage() {
                         }
                         
                         const totalYearPoints = msdPoints + durationPoints
-<<<<<<< HEAD
                         if (!flowHasMsd) {
                           return `${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
                         }
                         return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
-=======
-                        if (selectedFlow?.slug === 'apospasi') {
-                          return `${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
-                        } else {
-                          return `${msdPoints.toFixed(2)} ΜΣΔ + ${durationPoints.toFixed(2)} ΠΡΟΫΠ = ${totalYearPoints.toFixed(2)} μόρια`
-                        }
->>>>>>> ba001812cc450e13363c8cb841409655c5edcf54
                       })()})
                     </span>
                   </div>
@@ -985,7 +969,6 @@ export default function CalculatorPage() {
                              </label>
                            )}
                            
-<<<<<<< HEAD
                            {flowHasMsd && (
                              <>
                                <label className="flex flex-col gap-1">
@@ -1011,33 +994,6 @@ export default function CalculatorPage() {
                                  <span className="text-sm font-medium text-gray-700">Φυλακή</span>
                                </label>
                              </>
-=======
-                           {selectedFlow?.slug !== 'apospasi' && (
-                             <label className="flex flex-col gap-1">
-                               <span className="text-sm font-bold text-blue-900">ΜΣΔ</span>
-                               <input 
-                                 type="number" 
-                                 min={1} 
-                                 max={14} 
-                                 value={p.msd} 
-                                 onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, msd: parseInt(e.target.value) || 0 } : pp)) } : it)))}
-                                 onFocus={(e) => e.target.select()}
-                                 className="border border-gray-300 rounded-lg p-2 text-center text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
-                               />
-                             </label>
-                           )}
-                           
-                           {selectedFlow?.slug !== 'apospasi' && (
-                             <label className="flex items-center gap-2">
-                               <input 
-                                 type="checkbox" 
-                                 checked={p.isPrison} 
-                                 onChange={(e) => setYearsList((arr) => arr.map((it, i) => (i === idx ? { ...it, placements: it.placements.map((pp, j) => (j === pIdx ? { ...pp, isPrison: e.target.checked } : pp)) } : it)))}
-                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                               />
-                               <span className="text-sm font-medium text-gray-700">Φυλακή</span>
-                             </label>
->>>>>>> ba001812cc450e13363c8cb841409655c5edcf54
                            )}
                            
                            <button 
@@ -1104,11 +1060,7 @@ export default function CalculatorPage() {
               const dys = getCfg('dysprosita')
               const pris = getCfg('prisons')
               const msd = getCfg('msd')
-<<<<<<< HEAD
               if (flowHasMsd && msd) {
-=======
-              if (msd && selectedFlow?.slug !== 'apospasi') {
->>>>>>> ba001812cc450e13363c8cb841409655c5edcf54
                 if (supportsSubstitute && year.isSubstitute) {
                   const totalWeeklyHours = year.totalWeeklyHours
                   for (const pl of year.placements) {
@@ -1200,18 +1152,10 @@ export default function CalculatorPage() {
               }
             }
             
-<<<<<<< HEAD
             if (!flowHasMsd) {
               return `= ${totalDurationPoints.toFixed(2)} ΠΡΟΫΠ`
             }
             return `= ${totalMsdPoints.toFixed(2)} ΜΣΔ + ${totalDurationPoints.toFixed(2)} ΠΡΟΫΠ`
-=======
-            if (selectedFlow?.slug === 'apospasi') {
-              return `= ${totalDurationPoints.toFixed(2)} ΠΡΟΫΠ`
-            } else {
-              return `= ${totalMsdPoints.toFixed(2)} ΜΣΔ + ${totalDurationPoints.toFixed(2)} ΠΡΟΫΠ`
-            }
->>>>>>> ba001812cc450e13363c8cb841409655c5edcf54
           })()}
         </div>
       </div>
