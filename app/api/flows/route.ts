@@ -22,7 +22,7 @@ const staticFlows = [
       { criterion: { key: 'marriage', label: 'Γάμος / Σύμφωνο συμβίωσης / Χηρεία' }, config: { points: 4 } },
       { criterion: { key: 'children', label: 'Τέκνα' }, config: { first: 4, second: 4, third: 6, fourthPlus: 7 } },
       { criterion: { key: 'synypiretisi', label: 'Συνυπηρέτηση' }, config: { points: 4 } },
-      { criterion: { key: 'entopiotita', label: 'Εντοπιότητα' }, config: { points: 2 } },
+      { criterion: { key: 'entopiotita', label: 'Εντοπιότητα' }, config: { points: 4 } },
       { criterion: { key: 'proypiresia', label: 'Προϋπηρεσία (έτη)' }, config: { perYear: 2.5 } },
       { criterion: { key: 'msd', label: 'Συνθήκες Διαβίωσης (ΜΣΔ)' }, config: { perYear: true } },
       { criterion: { key: 'dysprosita', label: 'Δυσπρόσιτα' }, config: { doublesMsd: true, threshold: 11 } },
